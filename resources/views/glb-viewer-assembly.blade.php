@@ -544,14 +544,6 @@
         camera.position.set(-8, 6, 4);
         const assembly = new THREE.Group();
         scene.add(assembly);
-        const shadow = new THREE.Mesh(
-            new THREE.CircleGeometry(1, 48),
-            new THREE.MeshBasicMaterial({ color: 0x7f9484, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide })
-        );
-        shadow.material.userData.role = 'shadow';
-        shadow.position.z = 0.012;
-        shadow.renderOrder = 1;
-        scene.add(shadow);
         const loader = new GLTFLoader();
         const templateCache = new Map();
 
@@ -931,26 +923,8 @@
             });
             for (const tri of opaque) {
                 rasterTriangle(frame, tri.sa, tri.sb, tri.sc, tri.rgb, 255, true);
-                if (tri.role === 'grass' || tri.role === 'shadow') continue;
-                rememberEdge(edges, tri.a, tri.b, tri.sa, tri.sb, tri.normal);
-                rememberEdge(edges, tri.b, tri.c, tri.sb, tri.sc, tri.normal);
-                rememberEdge(edges, tri.c, tri.a, tri.sc, tri.sa, tri.normal);
             }
             ctx.putImageData(frame.image, 0, 0);
-            ctx.save();
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-            edges.forEach((edge) => {
-                const crease = edge.count === 1 || (edge.n1 && edge.n0.dot(edge.n1) < 0.86);
-                if (!crease || !edgeOnTop(frame, edge)) return;
-                ctx.strokeStyle = edge.count === 1 ? 'rgba(72, 66, 58, 0.42)' : 'rgba(96, 88, 78, 0.28)';
-                ctx.lineWidth = edge.count === 1 ? 1.15 : 1;
-                ctx.beginPath();
-                ctx.moveTo(edge.x0, edge.y0);
-                ctx.lineTo(edge.x1, edge.y1);
-                ctx.stroke();
-            });
-            ctx.restore();
         }
 
         function edgeOnTop(frame, edge) {
@@ -1007,7 +981,7 @@
         }
 
         function loadGround(model) {
-            return loadTemplate(model.path, true).then((template) => {
+            return loadTemplate(model.path).then((template) => {
                 const ground = template.clone(true);
                 const box = new THREE.Box3().setFromObject(ground);
                 // Vrch zeme presne na Z = 0, kde stojí dom.
@@ -1017,11 +991,10 @@
                 groundCenter.set(center.x, center.y);
             });
         }
-        function loadTemplate(path, isGround = false) {
+        function loadTemplate(path) {
             if (templateCache.has(path)) return Promise.resolve(templateCache.get(path));
             return new Promise((resolve, reject) => {
                 loader.load(path, (gltf) => {
-                    stylizeTemplate(gltf.scene, isGround);
                     templateCache.set(path, gltf.scene);
                     resolve(gltf.scene);
                 }, undefined, reject);
@@ -1140,13 +1113,6 @@
                 const houseCenter = new THREE.Box3().setFromObject(assembly).getCenter(new THREE.Vector3());
                 assembly.position.set(groundCenter.x - houseCenter.x, groundCenter.y - houseCenter.y, 0);
                 assembly.updateMatrixWorld(true);
-                const houseBox = new THREE.Box3().setFromObject(assembly);
-                if (!houseBox.isEmpty()) {
-                    const houseSize = houseBox.getSize(new THREE.Vector3());
-                    const houseMid = houseBox.getCenter(new THREE.Vector3());
-                    shadow.position.set(houseMid.x, houseMid.y, 0.012);
-                    shadow.scale.set(Math.max(2.2, houseSize.x * 0.62), Math.max(1.5, houseSize.y * 0.78), 1);
-                }
                 if (!hasFramed) {
                     frameObject(assembly);
                     hasFramed = true;
