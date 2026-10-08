@@ -18,7 +18,7 @@
             --bg: #f6f7f9;
             --surface: #ffffff;
             --surface-2: #f2f4f7;
-            --stage: #e9edf1;
+            --stage: #dce8f0;
             --border: #e4e7ec;
             --text: #101828;
             --muted: #667085;
@@ -538,12 +538,20 @@
         }
 
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0xe9edf1);
-        const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 1000);
+        scene.background = new THREE.Color(0xdce8f0);
+        const camera = new THREE.PerspectiveCamera(42, 1, 0.01, 1000);
         camera.up.set(0, 0, 1);
-        camera.position.set(-8, 0, 3);
+        camera.position.set(-8, 6, 4);
         const assembly = new THREE.Group();
         scene.add(assembly);
+        const shadow = new THREE.Mesh(
+            new THREE.CircleGeometry(1, 48),
+            new THREE.MeshBasicMaterial({ color: 0x7f9484, transparent: true, opacity: 0.28, depthWrite: false, side: THREE.DoubleSide })
+        );
+        shadow.material.userData.role = 'shadow';
+        shadow.position.z = 0.012;
+        shadow.renderOrder = 1;
+        scene.add(shadow);
         const loader = new GLTFLoader();
         const templateCache = new Map();
 
@@ -555,14 +563,20 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
             renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-            scene.add(new THREE.AmbientLight(0xffffff, 1.1));
-            const keyLight = new THREE.DirectionalLight(0xffffff, 1.6);
-            keyLight.position.set(-4, -2, 8);
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.05;
+            scene.add(new THREE.HemisphereLight(0xd7e8f6, 0xc5d4bc, 0.72));
+            const keyLight = new THREE.DirectionalLight(0xfff6ec, 1.25);
+            keyLight.position.set(-7, -4, 9);
             scene.add(keyLight);
-            scene.add(new THREE.DirectionalLight(0x88cfff, 0.6).translateX(-4));
+            const fillLight = new THREE.DirectionalLight(0xc5ddf2, 0.38);
+            fillLight.position.set(6, 5, 4);
+            scene.add(fillLight);
 
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
+            controls.minPolarAngle = 0.18;
+            controls.maxPolarAngle = Math.PI / 2 - 0.04;
         } catch (error) {
             console.error(error);
             webglAvailable = false;
@@ -582,7 +596,7 @@
             if (webglAvailable) {
                 renderer.setSize(width, height, false);
             } else {
-                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
                 canvas2d.width = Math.round(width * dpr);
                 canvas2d.height = Math.round(height * dpr);
                 renderSoftware();
@@ -595,7 +609,8 @@
             const center = box.getCenter(new THREE.Vector3());
             controls.target.copy(center);
             camera.up.set(0, 0, 1);
-            camera.position.set(center.x - 1.2, center.y, center.z + 0.28);
+            // 3/4 pohľad: čelný štít (+Y) aj okenná stena (−X), nie kolmý bočný rez.
+            camera.position.set(center.x - 1.35, center.y + 1.05, center.z + 0.72);
             fitObjectKeepingAngle(object);
         }
 
@@ -635,44 +650,258 @@
                     towardCamera + Math.abs(offset.dot(right)) / tanH,
                     towardCamera + Math.abs(offset.dot(cameraUp)) / tanV
                 );
-            });
+            });4
             distance *= 1.12;
             controls.target.copy(center);
             camera.position.copy(center).addScaledVector(direction, distance);
-            camera.near = Math.max(distance / 200, 0.01);
-            camera.far = Math.max(distance * 40, 100);
+            camera.near = Math.max(distance / 100, 0.05);
+            camera.far = Math.max(distance * 8, 40);
             camera.updateProjectionMatrix();
             controls.update();
         }
 
         const FALLBACK_COLOR = new THREE.Color(0xd8dee3);
-        const SOFTWARE_LIGHT = new THREE.Vector3(-0.4, -0.5, 1).normalize();
+        const KEY_LIGHT = new THREE.Vector3(-0.55, -0.42, 0.72).normalize();
+        const FILL_LIGHT = new THREE.Vector3(0.62, 0.28, 0.42).normalize();
+        const ROLE_MATS = new Map();
+        const tmpBox = new THREE.Box3();
+        const tmpSize = new THREE.Vector3();
+        const tmpCenter = new THREE.Vector3();
+        const tmpNormal = new THREE.Vector3();
+        let softFrame = null;
 
-        // Softvérový rasterizer skutočnej gLTF geometrie (bez WebGL) - premieta trojúholníky z 3d_objects na 2D canvas.
+        function roleMaterial(role) {
+            if (ROLE_MATS.has(role)) return ROLE_MATS.get(role);
+            const spec = {
+                plaster: { color: 0xf3efe6, roughness: 0.86 },
+                plasterShade: { color: 0xe4dbd0, roughness: 0.9 },
+                gable: { color: 0xf7f4ee, roughness: 0.84 },
+                roof: { color: 0x5c6a72, roughness: 0.7 },
+                roofUnder: { color: 0x3f4a51, roughness: 0.92 },
+                wood: { color: 0xc4a36e, roughness: 0.76 },
+                trim: { color: 0x8a8176, roughness: 0.62 },
+                grass: { color: 0xd7e3cf, roughness: 1 },
+                glass: { color: 0x8ec4de, roughness: 0.08, metalness: 0.04, transparent: true, opacity: 0.72, depthWrite: false }
+            }[role] || { color: 0xf3efe6, roughness: 0.86 };
+            const mat = new THREE.MeshStandardMaterial({
+                color: spec.color,
+                roughness: spec.roughness,
+                metalness: spec.metalness || 0,
+                side: THREE.DoubleSide,
+                transparent: !!spec.transparent,
+                opacity: spec.opacity ?? 1,
+                depthWrite: spec.depthWrite !== false
+            });
+            mat.userData.role = role;
+            ROLE_MATS.set(role, mat);
+            return mat;
+        }
+
+        function faceRole(normal, box, isGround) {
+            if (isGround) return 'grass';
+            const center = box.getCenter(tmpCenter);
+            const size = box.getSize(tmpSize);
+            const ax = Math.abs(normal.x);
+            const ay = Math.abs(normal.y);
+            const az = Math.abs(normal.z);
+            if (az > 0.4 && ax > 0.2 && center.z > 2.2) return normal.z > 0 ? 'roof' : 'roofUnder';
+            if (az > 0.85 && center.z > 0.05 && center.z < 0.8) return 'wood';
+            if (az > 0.85) return 'plasterShade';
+            // Ostenie okna: tenký výrez v hrúbke steny, nie celá fasáda.
+            if (center.x < 0.45 && size.x > 0.12 && size.x < 0.45 && size.y < 1.15 && size.z < 2.55) return 'trim';
+            if (ax > 0.75 && (center.x < 0.2 || center.x > 4.55)) return 'plaster';
+            if (ax > 0.75) return 'plasterShade';
+            if (ay > 0.75 && size.x > 3.5) return 'gable';
+            if (ay > 0.75) return 'plasterShade';
+            return 'plaster';
+        }
+
+        function stylizeTemplate(root, isGround) {
+            root.updateMatrixWorld(true);
+            const reveals = new THREE.Box3();
+            let hasReveal = false;
+            root.traverse((obj) => {
+                if (!obj.isMesh || !obj.geometry || obj.userData.glass) return;
+                const geom = obj.geometry;
+                if (!geom.boundingBox) geom.computeBoundingBox();
+                const normalAttr = geom.attributes.normal;
+                if (normalAttr) tmpNormal.fromBufferAttribute(normalAttr, 0);
+                else tmpNormal.set(0, 0, 1);
+                tmpNormal.transformDirection(obj.matrixWorld).normalize();
+                tmpBox.copy(geom.boundingBox).applyMatrix4(obj.matrixWorld);
+                const role = faceRole(tmpNormal, tmpBox, isGround);
+                obj.material = roleMaterial(role);
+                if (role === 'trim') {
+                    if (!hasReveal) {
+                        reveals.copy(tmpBox);
+                        hasReveal = true;
+                    } else {
+                        reveals.union(tmpBox);
+                    }
+                }
+            });
+            if (!hasReveal || isGround) return;
+            const size = reveals.getSize(tmpSize);
+            if (size.y < 0.25 || size.z < 0.4) return;
+            const x = reveals.min.x - 0.01;
+            const y0 = reveals.min.y;
+            const y1 = reveals.max.y;
+            const z0 = reveals.min.z;
+            const z1 = reveals.max.z;
+            const glassGeo = new THREE.BufferGeometry();
+            glassGeo.setAttribute('position', new THREE.Float32BufferAttribute([
+                x, y0, z0, x, y1, z0, x, y1, z1,
+                x, y0, z0, x, y1, z1, x, y0, z1
+            ], 3));
+            glassGeo.computeVertexNormals();
+            const glass = new THREE.Mesh(glassGeo, roleMaterial('glass'));
+            glass.userData.glass = true;
+            glass.renderOrder = 2;
+            root.add(glass);
+        }
+
+        function srgbByte(channel) {
+            const c = Math.min(1, Math.max(0, channel));
+            const encoded = c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+            return Math.round(encoded * 255);
+        }
+
+        function shadeBytes(color, normal, role) {
+            const key = Math.max(0, normal.dot(KEY_LIGHT));
+            const fill = Math.max(0, normal.dot(FILL_LIGHT));
+            const sky = normal.z * 0.5 + 0.5;
+            let light = 0.42 + 0.46 * key + 0.14 * fill + 0.08 * sky;
+            if (role === 'roof' || role === 'roofUnder') light *= 0.94;
+            if (role === 'trim') light *= 0.8;
+            if (role === 'grass') light = 0.72 + 0.2 * sky;
+            if (role === 'shadow') light = 1;
+            if (role === 'glass') light = 0.85 + 0.25 * sky;
+            return [srgbByte(color.r * light), srgbByte(color.g * light), srgbByte(color.b * light)];
+        }
+
+        function projectToScreen(scratch, world, w, h) {
+            scratch.copy(world).applyMatrix4(camera.matrixWorldInverse);
+            const viewDepth = -scratch.z;
+            scratch.applyMatrix4(camera.projectionMatrix);
+            return {
+                x: (scratch.x * 0.5 + 0.5) * w,
+                y: (1 - (scratch.y * 0.5 + 0.5)) * h,
+                z: viewDepth > 1e-4 ? 1 / viewDepth : 0,
+                ok: viewDepth > 0.02 && Number.isFinite(scratch.x) && Number.isFinite(scratch.y)
+            };
+        }
+
+        function rasterTriangle(frame, p0, p1, p2, rgb, alpha, writeDepth) {
+            if (!p0.ok || !p1.ok || !p2.ok) return;
+            if (p0.z > 1 && p1.z > 1 && p2.z > 1) return;
+            let x0 = p0.x, y0 = p0.y, z0 = p0.z;
+            let x1 = p1.x, y1 = p1.y, z1 = p1.z;
+            let x2 = p2.x, y2 = p2.y, z2 = p2.z;
+            let area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+            if (area < 0) {
+                let sx = x1, sy = y1, sz = z1;
+                x1 = x2; y1 = y2; z1 = z2;
+                x2 = sx; y2 = sy; z2 = sz;
+                area = -area;
+            }
+            if (area < 0.4) return;
+            const w = frame.w;
+            const h = frame.h;
+            let minX = Math.max(0, Math.floor(Math.min(x0, x1, x2)));
+            let maxX = Math.min(w - 1, Math.ceil(Math.max(x0, x1, x2)));
+            let minY = Math.max(0, Math.floor(Math.min(y0, y1, y2)));
+            let maxY = Math.min(h - 1, Math.ceil(Math.max(y0, y1, y2)));
+            if (maxX - minX > w * 4 || maxY - minY > h * 4) return;
+            const inv = 1 / area;
+            const data = frame.image.data;
+            const depth = frame.depth;
+            const r = rgb[0], g = rgb[1], b = rgb[2];
+            for (let y = minY; y <= maxY; y++) {
+                const row = y * w;
+                for (let x = minX; x <= maxX; x++) {
+                    const px = x + 0.5;
+                    const py = y + 0.5;
+                    const w0 = ((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py)) * inv;
+                    if (w0 < 0) continue;
+                    const w1 = ((x2 - px) * (y0 - py) - (x0 - px) * (y2 - py)) * inv;
+                    if (w1 < 0) continue;
+                    const w2 = 1 - w0 - w1;
+                    if (w2 < 0) continue;
+                    const z = w0 * z0 + w1 * z1 + w2 * z2;
+                    const idx = row + x;
+                    // z je 1/vzdialenosť od kamery — väčšia hodnota je bližšie.
+                    if (z <= depth[idx]) continue;
+                    const p = idx * 4;
+                    if (writeDepth) depth[idx] = z;
+                    if (alpha >= 250) {
+                        data[p] = r;
+                        data[p + 1] = g;
+                        data[p + 2] = b;
+                        data[p + 3] = 255;
+                    } else {
+                        const t = alpha / 255;
+                        data[p] = r * t + data[p] * (1 - t);
+                        data[p + 1] = g * t + data[p + 1] * (1 - t);
+                        data[p + 2] = b * t + data[p + 2] * (1 - t);
+                        data[p + 3] = 255;
+                    }
+                }
+            }
+        }
+
+        // Softvérový rasterizer skutočnej geometrie (bez WebGL): z-buffer, tiene a hrany.
         function renderSoftware() {
             const w = canvas2d.width;
             const h = canvas2d.height;
             if (!w || !h) return;
             const ctx = canvas2d.getContext('2d');
-            ctx.fillStyle = '#e9edf1';
-            ctx.fillRect(0, 0, w, h);
+            if (!softFrame || softFrame.w !== w || softFrame.h !== h) {
+                softFrame = { w, h, depth: new Float32Array(w * h), image: ctx.createImageData(w, h) };
+            }
+            const frame = softFrame;
+            frame.depth.fill(0);
+            const data = frame.image.data;
+            for (let y = 0; y < h; y++) {
+                const t = y / h;
+                const r = 214 + (228 - 214) * t;
+                const g = 228 + (236 - 228) * t;
+                const b = 240 + (232 - 240) * t;
+                const row = y * w * 4;
+                for (let x = 0; x < w; x++) {
+                    const p = row + x * 4;
+                    data[p] = r;
+                    data[p + 1] = g;
+                    data[p + 2] = b;
+                    data[p + 3] = 255;
+                }
+            camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
+            }
             scene.updateMatrixWorld(true);
             camera.updateMatrixWorld(true);
             const camPos = camera.position;
-            const triangles = [];
+            const opaque = [];
+            const transparent = [];
+            const edges = new Map();
             const a = new THREE.Vector3();
             const b = new THREE.Vector3();
             const c = new THREE.Vector3();
+            const pa = new THREE.Vector3();
+            const pb = new THREE.Vector3();
+            const pc = new THREE.Vector3();
+            const ab = new THREE.Vector3();
+            const ac = new THREE.Vector3();
             scene.traverse((obj) => {
                 if (!obj.isMesh || !obj.geometry || !obj.visible) return;
-                const geom = obj.geometry;
-                const posAttr = geom.attributes.position;
+                const posAttr = obj.geometry.attributes.position;
                 if (!posAttr) return;
-                const index = geom.index;
+                const index = obj.geometry.index;
                 const mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
                 const color = (mat && mat.color) ? mat.color : FALLBACK_COLOR;
+                const role = (mat && mat.userData && mat.userData.role) || '';
                 const side = mat ? mat.side : THREE.FrontSide;
+                const opacity = mat && mat.transparent ? (mat.opacity ?? 1) : 1;
                 const count = index ? index.count : posAttr.count;
+                const bucket = opacity < 0.98 ? transparent : opaque;
                 for (let i = 0; i < count; i += 3) {
                     const ia = index ? index.getX(i) : i;
                     const ib = index ? index.getX(i + 1) : i + 1;
@@ -680,41 +909,77 @@
                     a.fromBufferAttribute(posAttr, ia).applyMatrix4(obj.matrixWorld);
                     b.fromBufferAttribute(posAttr, ib).applyMatrix4(obj.matrixWorld);
                     c.fromBufferAttribute(posAttr, ic).applyMatrix4(obj.matrixWorld);
-                    const normal = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
-                    if (normal.lengthSq() < 1e-10) continue;
+                    ab.subVectors(b, a);
+                    ac.subVectors(c, a);
+                    const normal = new THREE.Vector3().crossVectors(ab, ac);
+                    if (normal.lengthSq() < 1e-12) continue;
                     normal.normalize();
-                    const centroid = a.clone().add(b).add(c).multiplyScalar(1 / 3);
-                    const viewDir = camPos.clone().sub(centroid);
-                    const facing = normal.dot(viewDir);
-                    // Jednostranné materiály (FrontSide/BackSide) sa pri pohľade zozadu nekreslia, presne ako vo WebGL.
+                    const cx = (a.x + b.x + c.x) / 3;
+                    const cy = (a.y + b.y + c.y) / 3;
+                    const cz = (a.z + b.z + c.z) / 3;
+                    const facing = normal.x * (camPos.x - cx) + normal.y * (camPos.y - cy) + normal.z * (camPos.z - cz);
                     if (side === THREE.FrontSide && facing <= 0) continue;
                     if (side === THREE.BackSide && facing > 0) continue;
-                    const pa = a.clone().project(camera);
-                    const pb = b.clone().project(camera);
-                    const pc = c.clone().project(camera);
-                    if (pa.z > 1 && pb.z > 1 && pc.z > 1) continue;
-                    const shade = Math.min(1, Math.max(0.3, Math.abs(normal.dot(SOFTWARE_LIGHT)) * 0.55 + 0.55));
-                    triangles.push({
-                        x0: (pa.x * 0.5 + 0.5) * w, y0: (1 - (pa.y * 0.5 + 0.5)) * h,
-                        x1: (pb.x * 0.5 + 0.5) * w, y1: (1 - (pb.y * 0.5 + 0.5)) * h,
-                        x2: (pc.x * 0.5 + 0.5) * w, y2: (1 - (pc.y * 0.5 + 0.5)) * h,
-                        depth: camPos.distanceTo(centroid),
-                        color, shade
-                    });
+                    if (facing < 0) normal.negate();
+                    const sa = projectToScreen(pa, a, w, h);
+                    const sb = projectToScreen(pb, b, w, h);
+                    const sc = projectToScreen(pc, c, w, h);
+                    const rgb = shadeBytes(color, normal, role);
+                    const depth = camPos.distanceToSquared(tmpCenter.set(cx, cy, cz));
+                    bucket.push({ sa, sb, sc, rgb, alpha: Math.round(opacity * 255), depth, role, normal: normal.clone(), a: a.clone(), b: b.clone(), c: c.clone() });
                 }
             });
-            triangles.sort((t1, t2) => t2.depth - t1.depth);
-            for (const t of triangles) {
-                const r = Math.round(Math.min(255, t.color.r * 255 * t.shade));
-                const g = Math.round(Math.min(255, t.color.g * 255 * t.shade));
-                const bl = Math.round(Math.min(255, t.color.b * 255 * t.shade));
-                ctx.fillStyle = `rgb(${r},${g},${bl})`;
+            for (const tri of opaque) {
+                rasterTriangle(frame, tri.sa, tri.sb, tri.sc, tri.rgb, 255, true);
+                if (tri.role === 'grass' || tri.role === 'shadow') continue;
+                rememberEdge(edges, tri.a, tri.b, tri.sa, tri.sb, tri.normal);
+                rememberEdge(edges, tri.b, tri.c, tri.sb, tri.sc, tri.normal);
+                rememberEdge(edges, tri.c, tri.a, tri.sc, tri.sa, tri.normal);
+            }
+            ctx.putImageData(frame.image, 0, 0);
+            ctx.save();
+            ctx.lineJoin = 'round';
+            ctx.lineCap = 'round';
+            edges.forEach((edge) => {
+                const crease = edge.count === 1 || (edge.n1 && edge.n0.dot(edge.n1) < 0.86);
+                if (!crease || !edgeOnTop(frame, edge)) return;
+                ctx.strokeStyle = edge.count === 1 ? 'rgba(72, 66, 58, 0.42)' : 'rgba(96, 88, 78, 0.28)';
+                ctx.lineWidth = edge.count === 1 ? 1.15 : 1;
                 ctx.beginPath();
-                ctx.moveTo(t.x0, t.y0);
-                ctx.lineTo(t.x1, t.y1);
-                ctx.lineTo(t.x2, t.y2);
-                ctx.closePath();
-                ctx.fill();
+                ctx.moveTo(edge.x0, edge.y0);
+                ctx.lineTo(edge.x1, edge.y1);
+                ctx.stroke();
+            });
+            ctx.restore();
+        }
+
+        function edgeOnTop(frame, edge) {
+            const steps = 5;
+            let visible = 0;
+            let tested = 0;
+            for (let i = 0; i < steps; i++) {
+                const t = (i + 0.5) / steps;
+                const x = Math.round(edge.x0 + (edge.x1 - edge.x0) * t);
+                const y = Math.round(edge.y0 + (edge.y1 - edge.y0) * t);
+                const z = edge.z0 + (edge.z1 - edge.z0) * t;
+                if (x < 1 || y < 1 || x >= frame.w - 1 || y >= frame.h - 1) continue;
+                tested++;
+                const buf = frame.depth[y * frame.w + x];
+                if (z >= buf - 0.0015) visible++;
+            }
+            return tested > 0 && visible >= Math.ceil(tested * 0.6);
+        }
+
+        function rememberEdge(edges, v0, v1, s0, s1, normal) {
+            const k0 = `${Math.round(v0.x * 400)},${Math.round(v0.y * 400)},${Math.round(v0.z * 400)}`;
+            const k1 = `${Math.round(v1.x * 400)},${Math.round(v1.y * 400)},${Math.round(v1.z * 400)}`;
+            const key = k0 < k1 ? k0 + '|' + k1 : k1 + '|' + k0;
+            const existing = edges.get(key);
+            if (!existing) {
+                edges.set(key, { count: 1, n0: normal.clone(), x0: s0.x, y0: s0.y, z0: s0.z, x1: s1.x, y1: s1.y, z1: s1.z });
+            } else if (existing.count === 1) {
+                existing.count = 2;
+                existing.n1 = normal.clone();
             }
         }
 
@@ -742,7 +1007,7 @@
         }
 
         function loadGround(model) {
-            return loadTemplate(model.path).then((template) => {
+            return loadTemplate(model.path, true).then((template) => {
                 const ground = template.clone(true);
                 const box = new THREE.Box3().setFromObject(ground);
                 // Vrch zeme presne na Z = 0, kde stojí dom.
@@ -752,10 +1017,11 @@
                 groundCenter.set(center.x, center.y);
             });
         }
-        function loadTemplate(path) {
+        function loadTemplate(path, isGround = false) {
             if (templateCache.has(path)) return Promise.resolve(templateCache.get(path));
             return new Promise((resolve, reject) => {
                 loader.load(path, (gltf) => {
+                    stylizeTemplate(gltf.scene, isGround);
                     templateCache.set(path, gltf.scene);
                     resolve(gltf.scene);
                 }, undefined, reject);
@@ -874,6 +1140,13 @@
                 const houseCenter = new THREE.Box3().setFromObject(assembly).getCenter(new THREE.Vector3());
                 assembly.position.set(groundCenter.x - houseCenter.x, groundCenter.y - houseCenter.y, 0);
                 assembly.updateMatrixWorld(true);
+                const houseBox = new THREE.Box3().setFromObject(assembly);
+                if (!houseBox.isEmpty()) {
+                    const houseSize = houseBox.getSize(new THREE.Vector3());
+                    const houseMid = houseBox.getCenter(new THREE.Vector3());
+                    shadow.position.set(houseMid.x, houseMid.y, 0.012);
+                    shadow.scale.set(Math.max(2.2, houseSize.x * 0.62), Math.max(1.5, houseSize.y * 0.78), 1);
+                }
                 if (!hasFramed) {
                     frameObject(assembly);
                     hasFramed = true;
