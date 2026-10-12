@@ -26,16 +26,24 @@ Route::get('/models', function () {
     if (is_dir($modelsPath)) {
         $files = array_diff(scandir($modelsPath), ['.', '..']);
         foreach ($files as $file) {
-            if (strtolower(pathinfo($file, PATHINFO_EXTENSION)) === 'glb') {
-                $models[] = [
-                    'name' => pathinfo($file, PATHINFO_FILENAME),
-                    'path' => '/3d_objects/' . rawurlencode($file),
-                    'file' => $file
-                ];
+            $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            if (!in_array($extension, ['glb', 'dae'], true)) {
+                continue;
             }
+            $name = pathinfo($file, PATHINFO_FILENAME);
+            // Ak existuje GLB aj DAE s rovnakým názvom, použije sa GLB.
+            if (isset($models[$name]) && $extension === 'dae') {
+                continue;
+            }
+            $models[$name] = [
+                'name' => $name,
+                'path' => '/3d_objects/' . rawurlencode($file),
+                'file' => $file
+            ];
         }
     }
     
+    $models = array_values($models);
     sort($models);
     return response()->json($models);
 });

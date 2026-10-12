@@ -9,7 +9,8 @@
         "imports": {
             "three": "/libs/three.module.js",
             "three/addons/controls/OrbitControls.js": "/libs/OrbitControls.js",
-            "three/addons/loaders/GLTFLoader.js": "/libs/GLTFLoader.js"
+            "three/addons/loaders/GLTFLoader.js": "/libs/GLTFLoader.js",
+            "three/addons/loaders/ColladaLoader.js": "/libs/ColladaLoader.js"
         }
     }
     </script>
@@ -488,6 +489,7 @@
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js';
 
         const SEGMENT_WIDTH = 1.2;
         // Šírka domu podľa bbox endwall (X -0,04 až 4,76 m).
@@ -545,6 +547,10 @@
         const assembly = new THREE.Group();
         scene.add(assembly);
         const loader = new GLTFLoader();
+        // Názvy priečinkov s '#' (napr. base_#1/...) treba zakódovať, inak ich prehliadač berie ako fragment URL.
+        const colladaManager = new THREE.LoadingManager();
+        colladaManager.setURLModifier((url) => url.replace(/#/g, '%23'));
+        const colladaLoader = new ColladaLoader(colladaManager);
         const templateCache = new Map();
 
         // Nastavenie rendereru môže zlyhať, ak prehliadač/zariadenie nepodporuje WebGL.
@@ -754,12 +760,28 @@
         }
         function loadTemplate(path) {
             if (templateCache.has(path)) return Promise.resolve(templateCache.get(path));
+            const isCollada = /\.dae$/i.test(path);
             return new Promise((resolve, reject) => {
-                loader.load(path, (gltf) => {
-                    templateCache.set(path, gltf.scene);
-                    resolve(gltf.scene);
-                }, undefined, reject);
+                const onLoad = (object) => {
+                    templateCache.set(path, object);
+                    resolve(object);
+                };
+                if (isCollada) {
+                    colladaLoader.load(path, (collada) => onLoad(colladaTemplate(collada.scene)), undefined, reject);
+                } else {
+                    loader.load(path, (gltf) => onLoad(gltf.scene), undefined, reject);
+                }
             });
+        }
+
+        // DAE je Z-UP a v palcoch. ColladaLoader scénu otočí na Y-UP, ale GLB modely používajú Z ako zvislú os,
+        // preto rotáciu vynulujeme. Mierku (palce -> metre) necháme na scéne; koreň zabalíme do skupiny,
+        // lebo rebuildAssembly resetuje transformáciu koreňa šablóny.
+        function colladaTemplate(scene) {
+            scene.rotation.set(0, 0, 0);
+            const wrapper = new THREE.Group();
+            wrapper.add(scene);
+            return wrapper;
         }
 
         function describe(model) {
