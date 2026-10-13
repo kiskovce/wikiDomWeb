@@ -281,6 +281,37 @@
             animation: shimmer 1.4s linear infinite;
         }
 
+        .picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-sm);
+        }
+        .picker + .picker { margin-top: 10px; }
+        .picker-arrow {
+            display: grid;
+            place-items: center;
+            flex: none;
+            width: 38px;
+            height: 38px;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .picker-arrow:hover:not(:disabled) { color: #fff; background: var(--accent); }
+        .picker-arrow:disabled { color: var(--subtle); background: var(--surface-2); cursor: default; }
+        .picker-art { flex: none; width: 48px; }
+        .picker-body { display: flex; flex-direction: column; flex: 1; min-width: 0; text-align: center; }
+        .picker-body small { font-size: 12px; color: var(--muted); }
+        .picker-body strong { font-size: 15px; font-weight: 600; }
+
         .sequence { display: flex; flex-direction: column; gap: 8px; list-style: none; }
         .seq-item {
             display: flex;
@@ -441,9 +472,19 @@
                 <p class="lead">Pridajte segmenty a dom sa s každým z nich predĺži o 1,2 m. Zmeny hneď uvidíte v 3D.</p>
             </header>
             <div class="panel-body">
-                <section class="step" aria-labelledby="step1">
+                <section class="step" aria-labelledby="stepEnds">
                     <div class="step-head">
                         <span class="step-num">1</span>
+                        <div>
+                            <h2 id="stepEnds">Vyberte čelné steny</h2>
+                            <p>Šípkami prepínate variant ľavej a pravej steny.</p>
+                        </div>
+                    </div>
+                    <div id="endPickers"></div>
+                </section>
+                <section class="step" aria-labelledby="step1">
+                    <div class="step-head">
+                        <span class="step-num">2</span>
                         <div>
                             <h2 id="step1">Pridajte segmenty</h2>
                             <p>Kliknite na typ steny. Môžete ho pridať viackrát.</p>
@@ -458,10 +499,10 @@
                 </section>
                 <section class="step" aria-labelledby="step2">
                     <div class="step-head">
-                        <span class="step-num">2</span>
+                        <span class="step-num">3</span>
                         <div>
                             <h2 id="step2">Vaša skladba</h2>
-                            <p>Poradie od prednej po zadnú čelnú stenu. Čelné steny sú vždy súčasťou domu.</p>
+                            <p>Poradie od ľavej po pravú čelnú stenu. Čelné steny sú vždy súčasťou domu.</p>
                         </div>
                     </div>
                     <ol class="sequence" id="sequenceList"></ol>
@@ -494,8 +535,8 @@
         const HOUSE_WIDTH = 5.5;
         const PRICING = { endwall: 3000, segment: 2000 };
         // Orientácia: '#' je ľavá čelná stena, '##' pravá (zrkadlová). Všetky segmenty sa skladajú zľava doprava.
-        const END_LEFT = 'endwall_#1';
-        const END_RIGHT = 'endwall_##1';
+        const END_LEFT_RE = /^endwall_#(\d+)$/i;
+        const END_RIGHT_RE = /^endwall_##(\d+)$/i;
         const CATALOG = {
             'segment_#1': { label: 'Plná stena', desc: 'Bez otvorov, viac súkromia', icon: 'plain', order: 1 },
             'segment_#11': { label: 'Okno 600 · stred', desc: 'Segment s oknom', icon: 'small', order: 2 },
@@ -519,6 +560,9 @@
         const sequence = [];
         let endwallStart = null;
         let endwallEnd = null;
+        const endLists = { left: [], right: [] };
+        const endIndex = { left: 0, right: 0 };
+        let buildId = 0;
         let hasFramed = false;
         let lastAdded = -1;
         let noticeTimer = 0;
@@ -531,6 +575,7 @@
         const canvas = document.getElementById('canvas');
         const canvas2d = document.getElementById('canvas2d');
         const catalogEl = document.getElementById('objectsList');
+        const endPickersEl = document.getElementById('endPickers');
         const sequenceList = document.getElementById('sequenceList');
 
         function setBusy(isBusy) {
@@ -980,16 +1025,36 @@
             return `<li class="${classes}"><span class="seq-num">${number}</span><span class="art seq-art">${wallIcon(info.icon)}</span><span class="seq-text"><strong>${label}</strong><small>${meta}</small></span>${action}</li>`;
         }
 
+        function endVariant(side) {
+            return endLists[side][endIndex[side]] ? Number(/(\d+)$/.exec(endLists[side][endIndex[side]].name)[1]) : 0;
+        }
+
+        function syncEndwalls() {
+            endwallStart = endLists.left[endIndex.left] || null;
+            endwallEnd = endLists.right[endIndex.right] || null;
+        }
+
+        function renderEndPickers() {
+            const arrow = (side, dir, title) => `<button type="button" class="picker-arrow" onclick="cycleEndwall('${side}', ${dir})" aria-label="${dir < 0 ? 'Predchádzajúci' : 'Ďalší'} variant: ${title}"${endLists[side].length < 2 ? ' disabled' : ''}>`
+                + `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="${dir < 0 ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'}"/></svg></button>`;
+            endPickersEl.innerHTML = [['left', 'Ľavá čelná stena'], ['right', 'Pravá čelná stena']].map(([side, title]) => `<div class="picker" role="group" aria-label="${title}">
+                ${arrow(side, -1, title)}
+                <span class="art picker-art">${wallIcon('end')}</span>
+                <span class="picker-body"><small>${title}</small><strong>Variant ${endVariant(side)} / ${endLists[side].length}</strong></span>
+                ${arrow(side, 1, title)}
+            </div>`).join('');
+        }
+
         function renderSequence() {
             const endInfo = () => ({ label: 'Čelná stena', icon: 'end' });
             const endPrice = money.format(PRICING.endwall);
             const segmentMeta = '1,2 m · ' + money.format(PRICING.segment);
-            const rows = [sequenceRow(1, endInfo(endwallStart), 'Predná · ' + endPrice)];
+            const rows = [sequenceRow(1, endInfo(), 'Ľavá · variant ' + endVariant('left') + ' · ' + endPrice)];
             if (!sequence.length) {
-                rows.push('<li class="seq-empty">Zatiaľ žiadny segment. Vyberte ho v kroku 1.</li>');
+                rows.push('<li class="seq-empty">Zatiaľ žiadny segment. Vyberte ho v kroku 2.</li>');
             }
             sequence.forEach((model, index) => rows.push(sequenceRow(index + 2, describe(model), segmentMeta, index)));
-            rows.push(sequenceRow(sequence.length + 2, endInfo(endwallEnd), 'Zadná · ' + endPrice));
+            rows.push(sequenceRow(sequence.length + 2, endInfo(), 'Pravá · variant ' + endVariant('right') + ' · ' + endPrice));
             sequenceList.innerHTML = rows.join('');
             lastAdded = -1;
         }
@@ -1023,8 +1088,11 @@
         function rebuildAssembly() {
             if (!endwallStart || !endwallEnd) return Promise.resolve();
             const parts = [endwallStart, ...sequence, endwallEnd];
+            const id = ++buildId;
             setBusy(true);
             return Promise.all(parts.map((model) => loadTemplate(model.path))).then((templates) => {
+                // Rýchle po sebe idúce kliknutia: aplikuje sa len posledná zostava.
+                if (id !== buildId) return;
                 assembly.clear();
                 templates.forEach((template, index) => {
                     const segment = template.clone(true);
@@ -1074,6 +1142,21 @@
             });
         };
 
+        window.cycleEndwall = function (side, dir) {
+            const list = endLists[side];
+            if (list.length < 2 || !endwallStart || !endwallEnd) return;
+            const previous = endIndex[side];
+            endIndex[side] = (previous + dir + list.length) % list.length;
+            syncEndwalls();
+            renderEndPickers();
+            rebuildAssembly().catch((error) => {
+                endIndex[side] = previous;
+                syncEndwalls();
+                renderEndPickers();
+                handleRebuildError(error, 'Čelnú stenu sa nepodarilo načítať. Skúste to znova.');
+            });
+        };
+
         window.removeSegment = function (index) {
             if (index < 0 || index >= sequence.length) return;
             sequence.splice(index, 1);
@@ -1100,8 +1183,12 @@
                 return response.json();
             })
             .then((data) => {
-                endwallStart = data.find((model) => modelKey(model) === END_LEFT) || null;
-                endwallEnd = data.find((model) => modelKey(model) === END_RIGHT) || null;
+                const byNumber = (left, right) => Number(/(\d+)$/.exec(left.name)[1]) - Number(/(\d+)$/.exec(right.name)[1]);
+                endLists.left = data.filter((model) => END_LEFT_RE.test(model.name)).sort(byNumber);
+                endLists.right = data.filter((model) => END_RIGHT_RE.test(model.name)).sort(byNumber);
+                endIndex.left = 0;
+                endIndex.right = 0;
+                syncEndwalls();
                 models.splice(0, models.length, ...data.filter(isCatalogModel));
                 models.sort((left, right) => {
                     const a = describe(left);
@@ -1109,10 +1196,11 @@
                     return (a.order - b.order) || a.label.localeCompare(b.label, 'sk');
                 });
                 renderCatalog();
+                renderEndPickers();
                 renderSequence();
                 updateSummary();
                 if (!endwallStart || !endwallEnd) {
-                    const missing = [!endwallStart ? END_LEFT + '.dae' : null, !endwallEnd ? END_RIGHT + '.dae' : null].filter(Boolean).join(' a ');
+                    const missing = [!endwallStart ? 'endwall_#N.dae' : null, !endwallEnd ? 'endwall_##N.dae' : null].filter(Boolean).join(' a ');
                     console.error('Chýba ' + missing + ' v priečinku 3d_objects');
                     showFatal('Konfigurátor je dočasne nedostupný.');
                     return;
