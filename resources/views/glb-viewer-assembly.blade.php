@@ -9,7 +9,6 @@
         "imports": {
             "three": "/libs/three.module.js",
             "three/addons/controls/OrbitControls.js": "/libs/OrbitControls.js",
-            "three/addons/loaders/GLTFLoader.js": "/libs/GLTFLoader.js",
             "three/addons/loaders/ColladaLoader.js": "/libs/ColladaLoader.js"
         }
     }
@@ -488,21 +487,29 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js';
 
         const SEGMENT_WIDTH = 1.2;
-        // Šírka domu podľa bbox endwall (X -0,04 až 4,76 m).
-        const HOUSE_WIDTH = 4.8;
+        // Šírka domu podľa bbox endwall (X 0 až 5,47 m).
+        const HOUSE_WIDTH = 5.5;
         const PRICING = { endwall: 3000, segment: 2000 };
+        // Orientácia: '#' je ľavá čelná stena, '##' pravá (zrkadlová). Všetky segmenty sa skladajú zľava doprava.
+        const END_LEFT = 'endwall_#1';
+        const END_RIGHT = 'endwall_##1';
         const CATALOG = {
-            'default': { label: 'Plná stena', desc: 'Bez okna, viac súkromia', icon: 'plain', order: 1 },
-            'small_window': { label: 'Malé okno', desc: 'Vhodné do kúpeľne a WC', icon: 'small', order: 2 },
-            'narrow window': { label: 'Úzke okno', desc: 'Zvislý pás svetla', icon: 'narrow', order: 3 },
-            'window': { label: 'Štandardné okno', desc: 'Vyvážené svetlo do izby', icon: 'standard', order: 4 },
-            'big window': { label: 'Veľké okno', desc: 'Výhľad a maximum svetla', icon: 'big', order: 5 },
-            'endwall_1': { label: 'Čelná stena', icon: 'end' },
-            'endwall_2': { label: 'Čelná stena', icon: 'end' }
+            'segment_#1': { label: 'Plná stena', desc: 'Bez otvorov, viac súkromia', icon: 'plain', order: 1 },
+            'segment_#11': { label: 'Okno 600 · stred', desc: 'Segment s oknom', icon: 'small', order: 2 },
+            'segment_#4': { label: 'Okno 900', desc: 'Segment s oknom', icon: 'standard', order: 3 },
+            'segment_#10': { label: 'Dvere 450 · stred', desc: 'Segment s dverami', icon: 'door', order: 4 },
+            'segment_#7': { label: 'Dvere 450 · vľavo', desc: 'Segment s dverami', icon: 'door', order: 5 },
+            'segment_#9': { label: 'Dvere 450 · vpravo', desc: 'Segment s dverami', icon: 'door', order: 6 },
+            'segment_#5': { label: 'Dvere 600 · stred', desc: 'Segment s dverami', icon: 'door', order: 7 },
+            'segment_#6': { label: 'Dvere 600 · vľavo', desc: 'Segment s dverami', icon: 'door', order: 8 },
+            'segment_#8': { label: 'Dvere 600 · vpravo', desc: 'Segment s dverami', icon: 'door', order: 9 },
+            'segment_#3': { label: 'Dvere 2200', desc: 'Segment s dverami', icon: 'door', order: 10 },
+            'segment_#2': { label: 'Dvere 2500', desc: 'Segment s dverami', icon: 'door', order: 11 },
+            'terasa_#1': { label: 'Terasa', desc: 'Segment terasy', icon: 'terrace', order: 12 },
+            'terasa_#2': { label: 'Terasa 2', desc: 'Segment terasy', icon: 'terrace', order: 13 }
         };
         const ICON_LOCK = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
         const ICON_CLOSE = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -515,7 +522,6 @@
         let hasFramed = false;
         let lastAdded = -1;
         let noticeTimer = 0;
-        const groundCenter = new THREE.Vector2(0, 0);
         const emptyState = document.getElementById('emptyState');
         const emptyText = document.getElementById('emptyText');
         const busyEl = document.getElementById('busy');
@@ -546,10 +552,19 @@
         camera.position.set(-8, 0, 3);
         const assembly = new THREE.Group();
         scene.add(assembly);
-        const loader = new GLTFLoader();
-        // Názvy priečinkov s '#' (napr. base_#1/...) treba zakódovať, inak ich prehliadač berie ako fragment URL.
+        // Zem: mriežka, aby ju softvérový rasterizer mohol orezať po bunkách.
+        const ground = new THREE.Mesh(
+            new THREE.PlaneGeometry(40, 40, 20, 20),
+            new THREE.MeshLambertMaterial({ color: 0xdfe8e2, side: THREE.DoubleSide })
+        );
+        ground.position.z = -0.005;
+        ground.userData.isGround = true;
+        scene.add(ground);
+        // Názvy priečinkov s '#' (napr. endwall_#1/...) treba zakódovať, inak ich prehliadač berie ako fragment URL.
         const colladaManager = new THREE.LoadingManager();
         colladaManager.setURLModifier((url) => url.replace(/#/g, '%23'));
+        // Textúry sa dotiahnu až po zložení domu, softvérové vykresľovanie z nich berie priemernú farbu.
+        colladaManager.onLoad = () => { if (!webglAvailable) renderSoftware(); };
         const colladaLoader = new ColladaLoader(colladaManager);
         const templateCache = new Map();
 
@@ -588,7 +603,8 @@
             if (webglAvailable) {
                 renderer.setSize(width, height, false);
             } else {
-                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                // Softvérové vykresľovanie je pomalšie, preto ho nerátame v plnom rozlíšení HiDPI displeja.
+                const dpr = Math.min(window.devicePixelRatio || 1, 1.25);
                 canvas2d.width = Math.round(width * dpr);
                 canvas2d.height = Math.round(height * dpr);
                 renderSoftware();
@@ -653,15 +669,92 @@
 
         const FALLBACK_COLOR = new THREE.Color(0xd8dee3);
         const SOFTWARE_LIGHT = new THREE.Vector3(-0.4, -0.5, 1).normalize();
+        const colorCache = new WeakMap();
+        const sampleCanvas = document.createElement('canvas');
+        sampleCanvas.width = sampleCanvas.height = 1;
 
-        // Softvérový rasterizer skutočnej gLTF geometrie (bez WebGL) - premieta trojúholníky z 3d_objects na 2D canvas.
+        // Farba materiálu v sRGB; ak má textúru, vynásobí sa jej priemernou farbou (cache až po načítaní obrázka).
+        function materialColor(mat) {
+            if (!mat) return FALLBACK_COLOR;
+            const cached = colorCache.get(mat);
+            if (cached) return cached;
+            const color = (mat.color || FALLBACK_COLOR).clone().convertLinearToSRGB();
+            const image = mat.map && mat.map.image;
+            if (mat.map) {
+                if (!image || !(image.naturalWidth || image.width)) return color;
+                try {
+                    const sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
+                    sctx.drawImage(image, 0, 0, 1, 1);
+                    const px = sctx.getImageData(0, 0, 1, 1).data;
+                    color.r *= px[0] / 255;
+                    color.g *= px[1] / 255;
+                    color.b *= px[2] / 255;
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            colorCache.set(mat, color);
+            return color;
+        }
+
+        // Softvérový rasterizer skutočnej DAE geometrie (bez WebGL) - trojuholníky z 3d_objects kreslí do pixelov so z-bufferom.
+        let swImage = null;
+        let swDepth = null;
+        const SKY = [0xe9, 0xed, 0xf1];
+
+        function fillTriangleZ(t, pixels32, pixels8, w, h, writeDepth) {
+            const { x0, y0, z0, x1, y1, z1, x2, y2, z2 } = t;
+            const area = (x1 - x0) * (y2 - y0) - (x2 - x0) * (y1 - y0);
+            if (Math.abs(area) < 1e-9) return;
+            const minX = Math.max(0, Math.floor(Math.min(x0, x1, x2)));
+            const maxX = Math.min(w - 1, Math.ceil(Math.max(x0, x1, x2)));
+            const minY = Math.max(0, Math.floor(Math.min(y0, y1, y2)));
+            const maxY = Math.min(h - 1, Math.ceil(Math.max(y0, y1, y2)));
+            const inv = 1 / area;
+            const r = Math.round(Math.min(255, t.color.r * 255 * t.shade));
+            const g = Math.round(Math.min(255, t.color.g * 255 * t.shade));
+            const bl = Math.round(Math.min(255, t.color.b * 255 * t.shade));
+            const packed = (255 << 24) | (bl << 16) | (g << 8) | r;
+            const alpha = t.alpha;
+            for (let y = minY; y <= maxY; y++) {
+                const py = y + 0.5;
+                const px = minX + 0.5;
+                let w0 = ((x1 - px) * (y2 - py) - (x2 - px) * (y1 - py)) * inv;
+                let w1 = ((x2 - px) * (y0 - py) - (x0 - px) * (y2 - py)) * inv;
+                const d0 = (y1 - y2) * inv;
+                const d1 = (y2 - y0) * inv;
+                let row = y * w + minX;
+                for (let x = minX; x <= maxX; x++, row++, w0 += d0, w1 += d1) {
+                    const w2 = 1 - w0 - w1;
+                    if (w0 < -1e-6 || w1 < -1e-6 || w2 < -1e-6) continue;
+                    const z = w0 * z0 + w1 * z1 + w2 * z2;
+                    if (z >= swDepth[row] || z < -1) continue;
+                    if (alpha >= 1) {
+                        pixels32[row] = packed;
+                        if (writeDepth) swDepth[row] = z;
+                    } else {
+                        const o = row * 4;
+                        pixels8[o] = pixels8[o] * (1 - alpha) + r * alpha;
+                        pixels8[o + 1] = pixels8[o + 1] * (1 - alpha) + g * alpha;
+                        pixels8[o + 2] = pixels8[o + 2] * (1 - alpha) + bl * alpha;
+                    }
+                }
+            }
+        }
+
         function renderSoftware() {
             const w = canvas2d.width;
             const h = canvas2d.height;
             if (!w || !h) return;
             const ctx = canvas2d.getContext('2d');
-            ctx.fillStyle = '#e9edf1';
-            ctx.fillRect(0, 0, w, h);
+            if (!swImage || swImage.width !== w || swImage.height !== h) {
+                swImage = ctx.createImageData(w, h);
+                swDepth = new Float32Array(w * h);
+            }
+            const pixels8 = swImage.data;
+            const pixels32 = new Uint32Array(pixels8.buffer);
+            pixels32.fill((255 << 24) | (SKY[2] << 16) | (SKY[1] << 8) | SKY[0]);
+            swDepth.fill(Infinity);
             scene.updateMatrixWorld(true);
             camera.updateMatrixWorld(true);
             const camPos = camera.position;
@@ -676,8 +769,11 @@
                 if (!posAttr) return;
                 const index = geom.index;
                 const mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
-                const color = (mat && mat.color) ? mat.color : FALLBACK_COLOR;
+                const color = materialColor(mat);
+                const alpha = mat && mat.transparent ? mat.opacity : 1;
                 const side = mat ? mat.side : THREE.FrontSide;
+                // Zrkadlené objekty (záporný determinant) majú obrátené vinutie, WebGL ho vtedy prehodí.
+                const mirrored = obj.matrixWorld.determinant() < 0;
                 const count = index ? index.count : posAttr.count;
                 for (let i = 0; i < count; i += 3) {
                     const ia = index ? index.getX(i) : i;
@@ -689,6 +785,7 @@
                     const normal = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
                     if (normal.lengthSq() < 1e-10) continue;
                     normal.normalize();
+                    if (mirrored) normal.negate();
                     const centroid = a.clone().add(b).add(c).multiplyScalar(1 / 3);
                     const viewDir = camPos.clone().sub(centroid);
                     const facing = normal.dot(viewDir);
@@ -698,30 +795,27 @@
                     const pa = a.clone().project(camera);
                     const pb = b.clone().project(camera);
                     const pc = c.clone().project(camera);
-                    if (pa.z > 1 && pb.z > 1 && pc.z > 1) continue;
+                    // Trojuholníky pred kamerou/za ňou by sa po projekcii zrútili, preto ich vynecháme.
+                    const nearZ = -camera.near;
+                    if (a.clone().applyMatrix4(camera.matrixWorldInverse).z > nearZ
+                        || b.clone().applyMatrix4(camera.matrixWorldInverse).z > nearZ
+                        || c.clone().applyMatrix4(camera.matrixWorldInverse).z > nearZ) continue;
                     const shade = Math.min(1, Math.max(0.3, Math.abs(normal.dot(SOFTWARE_LIGHT)) * 0.55 + 0.55));
                     triangles.push({
-                        x0: (pa.x * 0.5 + 0.5) * w, y0: (1 - (pa.y * 0.5 + 0.5)) * h,
-                        x1: (pb.x * 0.5 + 0.5) * w, y1: (1 - (pb.y * 0.5 + 0.5)) * h,
-                        x2: (pc.x * 0.5 + 0.5) * w, y2: (1 - (pc.y * 0.5 + 0.5)) * h,
+                        x0: (pa.x * 0.5 + 0.5) * w, y0: (1 - (pa.y * 0.5 + 0.5)) * h, z0: pa.z,
+                        x1: (pb.x * 0.5 + 0.5) * w, y1: (1 - (pb.y * 0.5 + 0.5)) * h, z1: pb.z,
+                        x2: (pc.x * 0.5 + 0.5) * w, y2: (1 - (pc.y * 0.5 + 0.5)) * h, z2: pc.z,
                         depth: camPos.distanceTo(centroid),
-                        color, shade
+                        color, shade, alpha
                     });
                 }
             });
-            triangles.sort((t1, t2) => t2.depth - t1.depth);
-            for (const t of triangles) {
-                const r = Math.round(Math.min(255, t.color.r * 255 * t.shade));
-                const g = Math.round(Math.min(255, t.color.g * 255 * t.shade));
-                const bl = Math.round(Math.min(255, t.color.b * 255 * t.shade));
-                ctx.fillStyle = `rgb(${r},${g},${bl})`;
-                ctx.beginPath();
-                ctx.moveTo(t.x0, t.y0);
-                ctx.lineTo(t.x1, t.y1);
-                ctx.lineTo(t.x2, t.y2);
-                ctx.closePath();
-                ctx.fill();
-            }
+            // Nepriehľadné trojuholníky idú do z-bufferu, priesvitné (sklo) sa potom primiešajú od najvzdialenejších.
+            const opaque = triangles.filter((t) => t.alpha >= 1);
+            const glass = triangles.filter((t) => t.alpha < 1).sort((t1, t2) => t2.depth - t1.depth);
+            for (const t of opaque) fillTriangleZ(t, pixels32, pixels8, w, h, true);
+            for (const t of glass) fillTriangleZ(t, pixels32, pixels8, w, h, false);
+            ctx.putImageData(swImage, 0, 0);
         }
 
         function escapeHtml(value) {
@@ -738,49 +832,59 @@
             return String(model.name || '').toLowerCase();
         }
 
-        function isFixedEnd(model) {
-            const key = modelKey(model);
-            return key === 'endwall_1' || key === 'endwall_2';
+        function isCatalogModel(model) {
+            return /^(segment|terasa)_#\d+$/.test(modelKey(model));
         }
 
-        function isGround(model) {
-            return modelKey(model) === 'ground';
-        }
-
-        function loadGround(model) {
-            return loadTemplate(model.path).then((template) => {
-                const ground = template.clone(true);
-                const box = new THREE.Box3().setFromObject(ground);
-                // Vrch zeme presne na Z = 0, kde stojí dom.
-                ground.position.z -= box.max.z;
-                scene.add(ground);
-                const center = new THREE.Box3().setFromObject(ground).getCenter(new THREE.Vector3());
-                groundCenter.set(center.x, center.y);
-            });
-        }
         function loadTemplate(path) {
             if (templateCache.has(path)) return Promise.resolve(templateCache.get(path));
-            const isCollada = /\.dae$/i.test(path);
             return new Promise((resolve, reject) => {
-                const onLoad = (object) => {
-                    templateCache.set(path, object);
-                    resolve(object);
-                };
-                if (isCollada) {
-                    colladaLoader.load(path, (collada) => onLoad(colladaTemplate(collada.scene)), undefined, reject);
-                } else {
-                    loader.load(path, (gltf) => onLoad(gltf.scene), undefined, reject);
-                }
+                colladaLoader.load(path, (collada) => {
+                    const template = colladaTemplate(collada.scene);
+                    templateCache.set(path, template);
+                    resolve(template);
+                }, undefined, reject);
             });
         }
 
-        // DAE je Z-UP a v palcoch. ColladaLoader scénu otočí na Y-UP, ale GLB modely používajú Z ako zvislú os,
+        // DAE je Z-UP a v palcoch. ColladaLoader scénu otočí na Y-UP, ale viewer používa Z ako zvislú os,
         // preto rotáciu vynulujeme. Mierku (palce -> metre) necháme na scéne; koreň zabalíme do skupiny,
-        // lebo rebuildAssembly resetuje transformáciu koreňa šablóny.
+        // lebo rebuildAssembly resetuje transformáciu koreňa šablóny. Každý dielec má v DAE vlastný posun
+        // (zo SketchUpu), preto si zapíšeme jeho bbox.min a pri skladaní ho vyrovnáme.
+        // Zrkadlené DAE (endwall_##) majú v dátach obrátené vinutie, ale normály zostali von; three.js pri zápornom determinante vinutie prehodí ešte raz, preto ho vrátime späť.
+        function fixMirroredWinding(root) {
+            root.updateMatrixWorld(true);
+            root.traverse((obj) => {
+                if (!obj.isMesh || obj.matrixWorld.determinant() >= 0) return;
+                const geometry = obj.geometry;
+                if (geometry.index) {
+                    const ix = geometry.index.array;
+                    for (let i = 0; i + 2 < ix.length; i += 3) [ix[i + 1], ix[i + 2]] = [ix[i + 2], ix[i + 1]];
+                    geometry.index.needsUpdate = true;
+                    return;
+                }
+                Object.values(geometry.attributes).forEach((attr) => {
+                    const size = attr.itemSize;
+                    const arr = attr.array;
+                    for (let t = 0; (t + 3) * size <= arr.length; t += 3) {
+                        for (let k = 0; k < size; k++) {
+                            const i1 = (t + 1) * size + k;
+                            const i2 = (t + 2) * size + k;
+                            [arr[i1], arr[i2]] = [arr[i2], arr[i1]];
+                        }
+                    }
+                    attr.needsUpdate = true;
+                });
+            });
+        }
+
         function colladaTemplate(scene) {
             scene.rotation.set(0, 0, 0);
             const wrapper = new THREE.Group();
             wrapper.add(scene);
+            fixMirroredWinding(wrapper);
+            wrapper.updateMatrixWorld(true);
+            wrapper.userData.min = new THREE.Box3().setFromObject(wrapper).min.clone();
             return wrapper;
         }
 
@@ -800,6 +904,8 @@
                 small: '<rect class="glass" x="26" y="13" width="12" height="11" rx="1.5"/>',
                 narrow: '<rect class="glass" x="28" y="11" width="8" height="26" rx="1.5"/>',
                 standard: '<rect class="glass" x="21" y="13" width="22" height="18" rx="1.5"/><line class="frame" x1="32" y1="13" x2="32" y2="31"/>',
+                door: '<rect class="glass" x="25" y="12" width="14" height="30" rx="1.5"/><circle cx="36" cy="28" r="1.2" fill="currentColor"/>',
+                terrace: '<rect class="glass" x="12" y="12" width="40" height="26" rx="1.5"/><line class="frame" x1="32" y1="12" x2="32" y2="38"/><line class="frame" x1="6" y1="42" x2="58" y2="42"/>',
                 big: '<rect class="glass" x="12" y="12" width="40" height="22" rx="1.5"/><line class="frame" x1="25.3" y1="12" x2="25.3" y2="34"/><line class="frame" x1="38.7" y1="12" x2="38.7" y2="34"/>'
             };
             return `<svg viewBox="0 0 64 48" aria-hidden="true"><rect class="wall" x="6" y="6" width="52" height="36" rx="3"/>${openings[type] || openings.plain}</svg>`;
@@ -839,7 +945,7 @@
         }
 
         function renderSequence() {
-            const endInfo = (model) => (model ? describe(model) : { label: 'Čelná stena', icon: 'end' });
+            const endInfo = () => ({ label: 'Čelná stena', icon: 'end' });
             const endPrice = money.format(PRICING.endwall);
             const segmentMeta = '1,2 m · ' + money.format(PRICING.segment);
             const rows = [sequenceRow(1, endInfo(endwallStart), 'Predná · ' + endPrice)];
@@ -888,13 +994,15 @@
                     const segment = template.clone(true);
                     segment.rotation.set(0, 0, 0);
                     segment.scale.set(1, 1, 1);
-                    segment.position.set(0, -index * SEGMENT_WIDTH, 0);
+                    // Dielce idú zľava doprava (pri predvolenom pohľade je vpravo -Y); bbox.min vyrovná posun z DAE.
+                    const min = template.userData.min;
+                    segment.position.set(-min.x, -(index + 1) * SEGMENT_WIDTH - min.y, -min.z);
                     assembly.add(segment);
                 });
                 assembly.position.set(0, 0, 0);
                 assembly.updateMatrixWorld(true);
                 const houseCenter = new THREE.Box3().setFromObject(assembly).getCenter(new THREE.Vector3());
-                assembly.position.set(groundCenter.x - houseCenter.x, groundCenter.y - houseCenter.y, 0);
+                assembly.position.set(-houseCenter.x, -houseCenter.y, 0);
                 assembly.updateMatrixWorld(true);
                 if (!hasFramed) {
                     frameObject(assembly);
@@ -956,9 +1064,9 @@
                 return response.json();
             })
             .then((data) => {
-                endwallStart = data.find((model) => modelKey(model) === 'endwall_1') || null;
-                endwallEnd = data.find((model) => modelKey(model) === 'endwall_2') || null;
-                models.splice(0, models.length, ...data.filter((model) => !isFixedEnd(model) && !isGround(model)));
+                endwallStart = data.find((model) => modelKey(model) === END_LEFT) || null;
+                endwallEnd = data.find((model) => modelKey(model) === END_RIGHT) || null;
+                models.splice(0, models.length, ...data.filter(isCatalogModel));
                 models.sort((left, right) => {
                     const a = describe(left);
                     const b = describe(right);
@@ -967,17 +1075,13 @@
                 renderCatalog();
                 renderSequence();
                 updateSummary();
-                const groundModel = data.find(isGround);
-                const groundReady = groundModel
-                    ? loadGround(groundModel).catch((error) => console.error('ground.glb', error))
-                    : Promise.resolve();
                 if (!endwallStart || !endwallEnd) {
-                    const missing = [!endwallStart ? 'endwall_1.glb' : null, !endwallEnd ? 'endwall_2.glb' : null].filter(Boolean).join(' a ');
+                    const missing = [!endwallStart ? END_LEFT + '.dae' : null, !endwallEnd ? END_RIGHT + '.dae' : null].filter(Boolean).join(' a ');
                     console.error('Chýba ' + missing + ' v priečinku 3d_objects');
                     showFatal('Konfigurátor je dočasne nedostupný.');
                     return;
                 }
-                return groundReady.then(rebuildAssembly);
+                return rebuildAssembly();
             })
             .catch((error) => {
                 console.error(error);

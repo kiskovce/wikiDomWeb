@@ -10,7 +10,7 @@
         "imports": {
             "three": "/libs/three.module.js",
             "three/addons/controls/OrbitControls.js": "/libs/OrbitControls.js",
-            "three/addons/loaders/GLTFLoader.js": "/libs/GLTFLoader.js"
+            "three/addons/loaders/ColladaLoader.js": "/libs/ColladaLoader.js"
         }
     }
     </script>
@@ -419,6 +419,67 @@
         .strip-foot span { font-size: 14px; color: var(--muted); }
         .strip-foot strong { font-size: 24px; letter-spacing: -0.02em; }
 
+        .maker { background: linear-gradient(180deg, var(--wood) 0%, #fff 100%); }
+        .maker h2 em { font-style: normal; color: var(--accent); }
+        .maker-head { max-width: 760px; margin: 0 auto 44px; text-align: center; }
+        .maker-head h2 { margin: 10px 0 18px; }
+        .maker-head p { font-size: 19px; color: var(--muted); }
+        .quote { max-width: 760px; margin: 0 auto 52px; padding: 30px 34px; background: var(--surface); border-left: 4px solid var(--wood-strong); border-radius: 0 var(--radius) var(--radius) 0; box-shadow: var(--shadow-sm); }
+        .quote p { font-size: 20px; font-style: italic; line-height: 1.5; }
+        .quote cite { display: block; margin-top: 12px; font-size: 14px; font-style: normal; font-weight: 600; color: var(--muted); }
+        .maker-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+        .maker-card { padding: 28px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-sm); }
+        .maker-card h3 { margin: 16px 0 8px; font-size: 19px; }
+        .maker-card p { font-size: 15px; color: var(--muted); }
+        .maker-close { margin-top: 48px; text-align: center; }
+        .maker-close p { margin-bottom: 20px; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+        @media (max-width: 1080px) { .maker-cards { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .maker-cards { grid-template-columns: 1fr; } .quote { padding: 22px; } }
+
+        .type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+        .type-card { padding: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); transition: transform 0.2s, box-shadow 0.2s; }
+        .type-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+        .type-art { display: grid; place-items: center; aspect-ratio: 4 / 3; margin-bottom: 18px; color: var(--accent); background: linear-gradient(160deg, #f7f3ec 0%, #e9efeb 100%); border-radius: 12px; }
+        .type-art svg { width: 78%; height: auto; overflow: visible; fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+        .type-art .fill { fill: #fff; }
+        .type-art .glass { fill: #cfe3f3; }
+        .type-art .ground { stroke: #b7c4bd; }
+        .type-card h3 { margin-bottom: 6px; font-size: 18px; }
+        .type-card p { font-size: 15px; color: var(--muted); }
+        .type-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 10px; margin-top: 36px; padding: 22px 26px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
+        .type-meta strong { margin-right: 6px; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+        .chip { padding: 6px 14px; font-size: 14px; font-weight: 600; color: var(--accent-strong); background: var(--accent-soft); border-radius: 999px; }
+        .type-meta p { flex-basis: 100%; font-size: 14px; color: var(--muted); }
+
+        .carbon { background: var(--surface-2); }
+        .carbon-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 72px; align-items: center; }
+        .carbon-text h2 { margin: 10px 0 16px; }
+        .carbon-text p { font-size: 18px; color: var(--muted); }
+        .chart { padding: 30px; background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); }
+        .chart-unit { margin-bottom: 22px; font-size: 13px; font-weight: 600; color: var(--muted); }
+        .bar { margin-bottom: 20px; }
+        .bar-head { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; font-size: 15px; font-weight: 600; }
+        .bar-track { height: 14px; background: var(--surface-2); border-radius: 999px; }
+        .bar-fill { height: 100%; border-radius: 999px; background: #98a2b3; }
+        .bar-fill.is-mid { background: var(--wood-strong); }
+        .bar-fill.is-neg { background: var(--accent); }
+        .chart-note { font-size: 12px; color: var(--subtle); }
+
+        .service-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+        .service { padding: 26px 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+        .service h3 { margin: 14px 0 8px; font-size: 18px; }
+        .service p { font-size: 15px; color: var(--muted); }
+        .paths-title { margin: 56px 0 20px; font-size: 24px; }
+        .paths { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+        .path { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 30px; border-radius: 20px; background: var(--wood); }
+        .path.is-alt { background: var(--dark); color: #e6efe9; }
+        .path .eyebrow { color: var(--accent-strong); }
+        .path.is-alt .eyebrow { color: var(--wood-strong); }
+        .path h3 { font-size: 22px; }
+        .path.is-alt h3 { color: #fff; }
+        .path p { margin-bottom: 8px; font-size: 16px; color: var(--muted); }
+        .path.is-alt p { color: #b8c9c0; }
+
         .faq-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 72px; align-items: start; }
         .faq-list { border-top: 1px solid var(--border); }
         .faq-list details { border-bottom: 1px solid var(--border); }
@@ -451,7 +512,8 @@
         .reveal.is-visible { opacity: 1; transform: none; }
 
         @media (max-width: 1080px) {
-            .feature-grid { grid-template-columns: repeat(2, 1fr); }
+            .feature-grid, .type-grid { grid-template-columns: repeat(2, 1fr); }
+            .service-grid { grid-template-columns: 1fr; }
             .steps { grid-template-columns: 1fr; gap: 0; }
             .step { padding: 0 0 32px 64px; min-height: 40px; }
             .step:not(:last-child)::after { top: 52px; bottom: 6px; left: 19px; right: auto; width: 2px; height: auto; background: var(--border); }
@@ -460,7 +522,7 @@
             .section { padding: 80px 0; }
             .nav-links a:not(.btn) { display: none; }
             .hero { padding: 40px 0 72px; }
-            .hero-grid, .about-grid, .made-grid, .cta-band, .faq-grid { grid-template-columns: 1fr; gap: 40px; }
+            .hero-grid, .about-grid, .made-grid, .cta-band, .faq-grid, .carbon-grid, .paths { grid-template-columns: 1fr; gap: 40px; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .stat:nth-child(3) { border-left: none; }
             .stat:nth-child(n + 3) { border-top: 1px solid var(--border); }
@@ -469,7 +531,7 @@
         }
         @media (max-width: 560px) {
             .container { padding: 0 20px; }
-            .feature-grid, .made-list { grid-template-columns: 1fr; }
+            .feature-grid, .made-list, .type-grid { grid-template-columns: 1fr; }
             .hero-actions .btn { width: 100%; }
             .float-card { display: none; }
             .faq-list summary { font-size: 16px; }
@@ -531,6 +593,8 @@
         <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h12v10H2z"/><path d="M14 10h4l4 4v2h-8"/><circle cx="6.5" cy="18" r="2"/><circle cx="17.5" cy="18" r="2"/></symbol>
         <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></symbol>
         <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20l1-4L16 5l3 3L8 19z"/><path d="M14 7l3 3"/></symbol>
+        <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14c2.5 0 4 2 4 5"/></symbol>
     </svg>
 
     <header class="nav" id="nav">
@@ -541,6 +605,9 @@
             </a>
             <nav class="nav-links" aria-label="{{ __('site.nav.aria_main') }}">
                 <a href="#system">{{ __('site.nav.system') }}</a>
+                @if (Lang::has('site.types.title'))
+                    <a href="#typy">{{ __('site.nav.projects') }}</a>
+                @endif
                 <a href="#vyhody">{{ __('site.nav.benefits') }}</a>
                 <a href="#vyroba">{{ __('site.nav.production') }}</a>
                 <a href="#postup">{{ __('site.nav.process') }}</a>
@@ -619,6 +686,35 @@
             </div>
         </section>
 
+        @if (Lang::hasForLocale('site.maker.title_html'))
+        <section class="section maker" id="architekt">
+            <div class="container">
+                <div class="maker-head reveal">
+                    <span class="eyebrow">{{ __('site.maker.eyebrow') }}</span>
+                    <h2>{!! __('site.maker.title_html') !!}</h2>
+                    <p>{{ __('site.maker.lead') }}</p>
+                </div>
+                <blockquote class="quote reveal">
+                    <p>{{ __('site.maker.quote') }}</p>
+                    <cite>{{ __('site.maker.quote_by') }}</cite>
+                </blockquote>
+                <div class="maker-cards">
+                    @foreach ([1 => 'i-cube', 2 => 'i-cnc', 3 => 'i-grid', 4 => 'i-people'] as $n => $icon)
+                        <article class="maker-card reveal">
+                            <span class="feature-icon"><svg class="icon"><use href="#{{ $icon }}"/></svg></span>
+                            <h3>{{ __('site.maker.c' . $n . '_title') }}</h3>
+                            <p>{{ __('site.maker.c' . $n . '_desc') }}</p>
+                        </article>
+                    @endforeach
+                </div>
+                <div class="maker-close reveal">
+                    <p>{{ __('site.maker.closing') }}</p>
+                    <a class="btn btn-primary" href="/glb-viewer">{{ __('site.maker.cta') }} <svg class="icon"><use href="#i-arrow"/></svg></a>
+                </div>
+            </div>
+        </section>
+        @endif
+
         <section class="section" id="system">
             <div class="container about-grid">
                 <div class="about-text reveal">
@@ -644,6 +740,59 @@
                 </ol>
             </div>
         </section>
+
+        @if (Lang::hasForLocale('site.types.title'))
+        <section class="section" id="typy">
+            <div class="container">
+                <div class="section-head reveal">
+                    <span class="eyebrow">{{ __('site.types.eyebrow') }}</span>
+                    <h2>{{ __('site.types.title') }}</h2>
+                    <p>{{ __('site.types.lead') }}</p>
+                </div>
+                <div class="type-grid">
+                    <article class="type-card reveal">
+                        <div class="type-art" aria-hidden="true">
+                            <svg viewBox="0 0 110 90"><path class="ground" d="M6 78h98"/><path class="fill" d="M24 44L55 18l31 26v34H24z"/><rect class="glass" x="46" y="52" width="18" height="14" rx="1.5"/></svg>
+                        </div>
+                        <h3>{{ __('site.types.t1_title') }}</h3>
+                        <p>{{ __('site.types.t1_desc') }}</p>
+                    </article>
+                    <article class="type-card reveal">
+                        <div class="type-art" aria-hidden="true">
+                            <svg viewBox="0 0 110 90"><path class="ground" d="M4 78h102"/><path class="fill" d="M10 46l15-16 15 16 15-16 15 16 15-16 15 16v32H10z"/><path d="M40 46v32M70 46v32"/><rect class="glass" x="19" y="56" width="12" height="11" rx="1.5"/><rect class="glass" x="49" y="56" width="12" height="11" rx="1.5"/><rect class="glass" x="79" y="56" width="12" height="11" rx="1.5"/></svg>
+                        </div>
+                        <h3>{{ __('site.types.t2_title') }}</h3>
+                        <p>{{ __('site.types.t2_desc') }}</p>
+                    </article>
+                    <article class="type-card reveal">
+                        <div class="type-art" aria-hidden="true">
+                            <svg viewBox="0 0 110 90"><path class="ground" d="M6 78h98"/><rect class="fill" x="28" y="8" width="54" height="70" rx="2"/><rect class="glass" x="36" y="16" width="9" height="9"/><rect class="glass" x="50" y="16" width="9" height="9"/><rect class="glass" x="64" y="16" width="9" height="9"/><rect class="glass" x="36" y="32" width="9" height="9"/><rect class="glass" x="50" y="32" width="9" height="9"/><rect class="glass" x="64" y="32" width="9" height="9"/><rect class="glass" x="36" y="48" width="9" height="9"/><rect class="glass" x="50" y="48" width="9" height="9"/><rect class="glass" x="64" y="48" width="9" height="9"/><rect class="glass" x="50" y="64" width="9" height="14"/></svg>
+                        </div>
+                        <h3>{{ __('site.types.t3_title') }}</h3>
+                        <p>{{ __('site.types.t3_desc') }}</p>
+                    </article>
+                    <article class="type-card reveal">
+                        <div class="type-art" aria-hidden="true">
+                            <svg viewBox="0 0 110 90"><path class="ground" d="M4 78h102"/><rect class="fill" x="8" y="26" width="28" height="52"/><rect class="fill" x="74" y="26" width="28" height="52"/><rect x="40" y="26" width="30" height="52" style="fill:#e7f1ec;stroke-dasharray:5 4"/><rect class="glass" x="48" y="36" width="14" height="12" rx="1.5"/><rect class="glass" x="48" y="56" width="14" height="12" rx="1.5"/><rect class="glass" x="16" y="36" width="12" height="10"/><rect class="glass" x="82" y="36" width="12" height="10"/></svg>
+                        </div>
+                        <h3>{{ __('site.types.t4_title') }}</h3>
+                        <p>{{ __('site.types.t4_desc') }}</p>
+                    </article>
+                </div>
+                <div class="type-meta reveal">
+                    <strong>{{ __('site.types.use_title') }}</strong>
+                    @foreach (range(1, 5) as $i)
+                        <span class="chip">{{ __('site.types.use_' . $i) }}</span>
+                    @endforeach
+                    <strong style="margin-left: 18px;">{{ __('site.types.storeys_title') }}</strong>
+                    @foreach (range(1, 4) as $i)
+                        <span class="chip">{{ __('site.types.storey_' . $i) }}</span>
+                    @endforeach
+                    <p>{{ __('site.types.storeys_note') }}</p>
+                </div>
+            </div>
+        </section>
+        @endif
 
         <section class="section features" id="vyhody">
             <div class="container">
@@ -705,12 +854,43 @@
             </div>
         </section>
 
+        @if (Lang::hasForLocale('site.carbon.title'))
+        <section class="section carbon" id="uhlik">
+            <div class="container carbon-grid">
+                <div class="carbon-text reveal">
+                    <span class="eyebrow">{{ __('site.carbon.eyebrow') }}</span>
+                    <h2>{{ __('site.carbon.title') }}</h2>
+                    <p>{{ __('site.carbon.lead') }}</p>
+                </div>
+                <div class="chart reveal" role="img" aria-label="{{ __('site.carbon.unit') }}">
+                    <p class="chart-unit">{{ __('site.carbon.unit') }}</p>
+                    <div class="bar">
+                        <div class="bar-head"><span>{{ __('site.carbon.bar1_lbl') }}</span><span>{{ __('site.carbon.bar1_val') }}</span></div>
+                        <div class="bar-track"><div class="bar-fill" style="width: 100%"></div></div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-head"><span>{{ __('site.carbon.bar2_lbl') }}</span><span>{{ __('site.carbon.bar2_val') }}</span></div>
+                        <div class="bar-track"><div class="bar-fill is-mid" style="width: 25%"></div></div>
+                    </div>
+                    <div class="bar">
+                        <div class="bar-head"><span>{{ __('site.carbon.bar3_lbl') }}</span><span>{{ __('site.carbon.bar3_val') }}</span></div>
+                        <div class="bar-track"><div class="bar-fill is-neg" style="width: 70%"></div></div>
+                    </div>
+                    <p class="chart-note">{{ __('site.carbon.note') }}</p>
+                </div>
+            </div>
+        </section>
+        @endif
+
         <section class="section made" id="vyroba">
             <div class="container made-grid">
                 <div class="reveal">
                     <span class="eyebrow">{{ __('site.production.eyebrow') }}</span>
                     <h2>{{ __('site.production.title') }}</h2>
                     <p class="made-lead">{{ __('site.production.lead') }}</p>
+                    @if (Lang::hasForLocale('site.production.network'))
+                        <p class="made-lead" style="margin-top: 14px;">{{ __('site.production.network') }}</p>
+                    @endif
                     <a class="btn btn-light" href="/glb-viewer">{{ __('site.production.cta') }} <svg class="icon"><use href="#i-arrow"/></svg></a>
                 </div>
                 <ul class="made-list">
@@ -737,6 +917,49 @@
                 </ul>
             </div>
         </section>
+
+        @if (Lang::hasForLocale('site.services.title'))
+        <section class="section" id="sluzby">
+            <div class="container">
+                <div class="section-head reveal">
+                    <span class="eyebrow">{{ __('site.services.eyebrow') }}</span>
+                    <h2>{{ __('site.services.title') }}</h2>
+                    <p>{{ __('site.services.lead') }}</p>
+                </div>
+                <div class="service-grid">
+                    <article class="service reveal">
+                        <span class="feature-icon"><svg class="icon"><use href="#i-cube"/></svg></span>
+                        <h3>{{ __('site.services.sv1_title') }}</h3>
+                        <p>{{ __('site.services.sv1_desc') }}</p>
+                    </article>
+                    <article class="service reveal">
+                        <span class="feature-icon"><svg class="icon"><use href="#i-pencil"/></svg></span>
+                        <h3>{{ __('site.services.sv2_title') }}</h3>
+                        <p>{{ __('site.services.sv2_desc') }}</p>
+                    </article>
+                    <article class="service reveal">
+                        <span class="feature-icon"><svg class="icon"><use href="#i-people"/></svg></span>
+                        <h3>{{ __('site.services.sv3_title') }}</h3>
+                        <p>{{ __('site.services.sv3_desc') }}</p>
+                    </article>
+                </div>
+                <h3 class="paths-title reveal">{{ __('site.services.paths_title') }}</h3>
+                <div class="paths">
+                    <div class="path reveal">
+                        <span class="eyebrow">{{ __('site.services.path_a_label') }}</span>
+                        <h3>{{ __('site.services.path_a_title') }}</h3>
+                        <p>{{ __('site.services.path_a_desc') }}</p>
+                    </div>
+                    <div class="path is-alt reveal">
+                        <span class="eyebrow">{{ __('site.services.path_b_label') }}</span>
+                        <h3>{{ __('site.services.path_b_title') }}</h3>
+                        <p>{{ __('site.services.path_b_desc') }}</p>
+                        <a class="btn btn-light" href="/glb-viewer">{{ __('site.services.path_b_cta') }} <svg class="icon"><use href="#i-arrow"/></svg></a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        @endif
 
         <section class="section" id="postup">
             <div class="container">
@@ -827,6 +1050,14 @@
                         <summary>{{ __('site.faq.q5') }}<svg class="icon"><use href="#i-plus"/></svg></summary>
                         <p>{{ __('site.faq.a5') }}</p>
                     </details>
+                    @if (Lang::hasForLocale('site.faq.q6'))
+                        @foreach ([6, 7] as $n)
+                            <details>
+                                <summary>{{ __('site.faq.q' . $n) }}<svg class="icon"><use href="#i-plus"/></svg></summary>
+                                <p>{{ __('site.faq.a' . $n) }}</p>
+                            </details>
+                        @endforeach
+                    @endif
                 </div>
             </div>
         </section>
@@ -893,17 +1124,53 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js';
 
-        const HOUSE = ['endwall_1', 'window', 'big window', 'narrow window', 'window', 'endwall_2'];
+        const HOUSE = ['endwall_#1', 'segment_#4', 'segment_#1', 'segment_#11', 'segment_#4', 'endwall_##1'];
         const SEGMENT_WIDTH = 1.2;
         const holder = document.getElementById('heroVisual');
         const canvas = document.getElementById('heroCanvas');
         const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+        // DAE je Z-UP v palcoch; rotáciu loadera vynulujeme a dielec vyrovnáme podľa bbox (každý má vlastný posun zo SketchUpu).
+        // Zrkadlené DAE (endwall_##) majú v dátach obrátené vinutie, ale normály zostali von; three.js pri zápornom determinante vinutie prehodí ešte raz, preto ho vrátime späť.
+        function fixMirroredWinding(root) {
+            root.updateMatrixWorld(true);
+            root.traverse((obj) => {
+                if (!obj.isMesh || obj.matrixWorld.determinant() >= 0) return;
+                const geometry = obj.geometry;
+                if (geometry.index) {
+                    const ix = geometry.index.array;
+                    for (let i = 0; i + 2 < ix.length; i += 3) [ix[i + 1], ix[i + 2]] = [ix[i + 2], ix[i + 1]];
+                    geometry.index.needsUpdate = true;
+                    return;
+                }
+                Object.values(geometry.attributes).forEach((attr) => {
+                    const size = attr.itemSize;
+                    const arr = attr.array;
+                    for (let t = 0; (t + 3) * size <= arr.length; t += 3) {
+                        for (let k = 0; k < size; k++) {
+                            const i1 = (t + 1) * size + k;
+                            const i2 = (t + 2) * size + k;
+                            [arr[i1], arr[i2]] = [arr[i2], arr[i1]];
+                        }
+                    }
+                    attr.needsUpdate = true;
+                });
+            });
+        }
+
         function loadModel(loader, name) {
             return new Promise((resolve) => {
-                loader.load('/3d_objects/' + encodeURIComponent(name) + '.glb', (gltf) => resolve(gltf.scene), undefined, () => resolve(null));
+                loader.load('/3d_objects/' + encodeURIComponent(name) + '.dae', (collada) => {
+                    collada.scene.rotation.set(0, 0, 0);
+                    const part = new THREE.Group();
+                    part.add(collada.scene);
+                    fixMirroredWinding(part);
+                    part.updateMatrixWorld(true);
+                    part.userData.min = new THREE.Box3().setFromObject(part).min.clone();
+                    resolve(part);
+                }, undefined, () => resolve(null));
             });
         }
 
@@ -925,11 +1192,15 @@
             sun.position.set(-6, -4, 10);
             scene.add(sun);
 
-            const loader = new GLTFLoader();
+            // Názvy priečinkov s '#' (textúry) treba zakódovať, inak ich prehliadač berie ako fragment URL.
+            const manager = new THREE.LoadingManager();
+            manager.setURLModifier((url) => url.replace(/#/g, '%23'));
+            const loader = new ColladaLoader(manager);
             const parts = await Promise.all(HOUSE.map((name) => loadModel(loader, name)));
             const house = new THREE.Group();
             parts.filter(Boolean).forEach((part, index) => {
-                part.position.set(0, -index * SEGMENT_WIDTH, 0);
+                const min = part.userData.min;
+                part.position.set(-min.x, -(index + 1) * SEGMENT_WIDTH - min.y, -min.z);
                 house.add(part);
             });
             if (!house.children.length) return;
