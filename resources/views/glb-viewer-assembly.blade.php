@@ -563,7 +563,7 @@
         // Názvy priečinkov s '#' (napr. endwall_#1/...) treba zakódovať, inak ich prehliadač berie ako fragment URL.
         const colladaManager = new THREE.LoadingManager();
         colladaManager.setURLModifier((url) => url.replace(/#/g, '%23'));
-        // Textúry sa dotiahnu až po zložení domu, softvérové vykresľovanie z nich berie priemernú farbu.
+        // Textúry sa dotiahnu až po zložení domu, softvérové vykresľovanie ich vzorkuje pixel po pixeli.
         colladaManager.onLoad = () => { if (!webglAvailable) renderSoftware(); };
         const colladaLoader = new ColladaLoader(colladaManager);
         const templateCache = new Map();
@@ -670,29 +670,33 @@
         const FALLBACK_COLOR = new THREE.Color(0xd8dee3);
         const SOFTWARE_LIGHT = new THREE.Vector3(-0.4, -0.5, 1).normalize();
         const colorCache = new WeakMap();
-        const sampleCanvas = document.createElement('canvas');
-        sampleCanvas.width = sampleCanvas.height = 1;
 
-        // Farba materiálu v sRGB; ak má textúru, vynásobí sa jej priemernou farbou (cache až po načítaní obrázka).
+        // Pixely načítanej textúry pre vzorkovanie v softvérovom rasterizeri (null, kým sa obrázok nenačíta).
+        const textureCache = new WeakMap();
+        function textureData(mat) {
+            const map = mat && mat.map;
+            const image = map && map.image;
+            if (!image || !(image.naturalWidth || image.width)) return null;
+            const cached = textureCache.get(map);
+            if (cached) return cached;
+            const tw = image.naturalWidth || image.width;
+            const th = image.naturalHeight || image.height;
+            const texCanvas = document.createElement('canvas');
+            texCanvas.width = tw;
+            texCanvas.height = th;
+            const tctx = texCanvas.getContext('2d', { willReadFrequently: true });
+            tctx.drawImage(image, 0, 0);
+            const data = { pixels: tctx.getImageData(0, 0, tw, th).data, w: tw, h: th };
+            textureCache.set(map, data);
+            return data;
+        }
+
+        // Farba materiálu v sRGB (textúra sa vzorkuje zvlášť v rasterizeri).
         function materialColor(mat) {
             if (!mat) return FALLBACK_COLOR;
             const cached = colorCache.get(mat);
             if (cached) return cached;
             const color = (mat.color || FALLBACK_COLOR).clone().convertLinearToSRGB();
-            const image = mat.map && mat.map.image;
-            if (mat.map) {
-                if (!image || !(image.naturalWidth || image.width)) return color;
-                try {
-                    const sctx = sampleCanvas.getContext('2d', { willReadFrequently: true });
-                    sctx.drawImage(image, 0, 0, 1, 1);
-                    const px = sctx.getImageData(0, 0, 1, 1).data;
-                    color.r *= px[0] / 255;
-                    color.g *= px[1] / 255;
-                    color.b *= px[2] / 255;
-                } catch (error) {
-                    console.error(error);
-                }
-            }
             colorCache.set(mat, color);
             return color;
         }
@@ -714,7 +718,7 @@
             const r = Math.round(Math.min(255, t.color.r * 255 * t.shade));
             const g = Math.round(Math.min(255, t.color.g * 255 * t.shade));
             const bl = Math.round(Math.min(255, t.color.b * 255 * t.shade));
-            const packed = (255 << 24) | (bl << 16) | (g << 8) | r;
+            const tex = t.tex;
             const alpha = t.alpha;
             for (let y = minY; y <= maxY; y++) {
                 const py = y + 0.5;
@@ -729,14 +733,31 @@
                     if (w0 < -1e-6 || w1 < -1e-6 || w2 < -1e-6) continue;
                     const z = w0 * z0 + w1 * z1 + w2 * z2;
                     if (z >= swDepth[row] || z < -1) continue;
+                    let pr = r;
+                    let pg = g;
+                    let pb = bl;
+                    if (tex) {
+                        const iw = w0 * t.iw0 + w1 * t.iw1 + w2 * t.iw2;
+                        let u = (w0 * t.u0 + w1 * t.u1 + w2 * t.u2) / iw;
+                        let v = (w0 * t.v0 + w1 * t.v1 + w2 * t.v2) / iw;
+                        u -= Math.floor(u);
+                        v -= Math.floor(v);
+                        // flipY: v = 0 je spodný okraj obrázka.
+                        const tx = Math.min(tex.w - 1, (u * tex.w) | 0);
+                        const ty = Math.min(tex.h - 1, ((1 - v) * tex.h) | 0);
+                        const ti = (ty * tex.w + tx) * 4;
+                        pr = Math.min(255, tex.pixels[ti] * t.color.r * t.shade) | 0;
+                        pg = Math.min(255, tex.pixels[ti + 1] * t.color.g * t.shade) | 0;
+                        pb = Math.min(255, tex.pixels[ti + 2] * t.color.b * t.shade) | 0;
+                    }
                     if (alpha >= 1) {
-                        pixels32[row] = packed;
+                        pixels32[row] = (255 << 24) | (pb << 16) | (pg << 8) | pr;
                         if (writeDepth) swDepth[row] = z;
                     } else {
                         const o = row * 4;
-                        pixels8[o] = pixels8[o] * (1 - alpha) + r * alpha;
-                        pixels8[o + 1] = pixels8[o + 1] * (1 - alpha) + g * alpha;
-                        pixels8[o + 2] = pixels8[o + 2] * (1 - alpha) + bl * alpha;
+                        pixels8[o] = pixels8[o] * (1 - alpha) + pr * alpha;
+                        pixels8[o + 1] = pixels8[o + 1] * (1 - alpha) + pg * alpha;
+                        pixels8[o + 2] = pixels8[o + 2] * (1 - alpha) + pb * alpha;
                     }
                 }
             }
@@ -770,6 +791,8 @@
                 const index = geom.index;
                 const mat = Array.isArray(obj.material) ? obj.material[0] : obj.material;
                 const color = materialColor(mat);
+                const uvAttr = geom.attributes.uv;
+                const tex = uvAttr ? textureData(mat) : null;
                 const alpha = mat && mat.transparent ? mat.opacity : 1;
                 const side = mat ? mat.side : THREE.FrontSide;
                 // Zrkadlené objekty (záporný determinant) majú obrátené vinutie, WebGL ho vtedy prehodí.
@@ -797,17 +820,30 @@
                     const pc = c.clone().project(camera);
                     // Trojuholníky pred kamerou/za ňou by sa po projekcii zrútili, preto ich vynecháme.
                     const nearZ = -camera.near;
-                    if (a.clone().applyMatrix4(camera.matrixWorldInverse).z > nearZ
-                        || b.clone().applyMatrix4(camera.matrixWorldInverse).z > nearZ
-                        || c.clone().applyMatrix4(camera.matrixWorldInverse).z > nearZ) continue;
+                    const viewA = a.clone().applyMatrix4(camera.matrixWorldInverse).z;
+                    const viewB = b.clone().applyMatrix4(camera.matrixWorldInverse).z;
+                    const viewC = c.clone().applyMatrix4(camera.matrixWorldInverse).z;
+                    if (viewA > nearZ || viewB > nearZ || viewC > nearZ) continue;
                     const shade = Math.min(1, Math.max(0.3, Math.abs(normal.dot(SOFTWARE_LIGHT)) * 0.55 + 0.55));
-                    triangles.push({
+                    const tri = {
                         x0: (pa.x * 0.5 + 0.5) * w, y0: (1 - (pa.y * 0.5 + 0.5)) * h, z0: pa.z,
                         x1: (pb.x * 0.5 + 0.5) * w, y1: (1 - (pb.y * 0.5 + 0.5)) * h, z1: pb.z,
                         x2: (pc.x * 0.5 + 0.5) * w, y2: (1 - (pc.y * 0.5 + 0.5)) * h, z2: pc.z,
                         depth: camPos.distanceTo(centroid),
-                        color, shade, alpha
-                    });
+                        color, shade, alpha, tex: null
+                    };
+                    if (tex) {
+                        // Perspektívne správne UV: interpolujeme u/w, v/w a 1/w (w = vzdialenosť pred kamerou).
+                        const iwA = -1 / viewA;
+                        const iwB = -1 / viewB;
+                        const iwC = -1 / viewC;
+                        tri.tex = tex;
+                        tri.iw0 = iwA; tri.iw1 = iwB; tri.iw2 = iwC;
+                        tri.u0 = uvAttr.getX(ia) * iwA; tri.v0 = uvAttr.getY(ia) * iwA;
+                        tri.u1 = uvAttr.getX(ib) * iwB; tri.v1 = uvAttr.getY(ib) * iwB;
+                        tri.u2 = uvAttr.getX(ic) * iwC; tri.v2 = uvAttr.getY(ic) * iwC;
+                    }
+                    triangles.push(tri);
                 }
             });
             // Nepriehľadné trojuholníky idú do z-bufferu, priesvitné (sklo) sa potom primiešajú od najvzdialenejších.
