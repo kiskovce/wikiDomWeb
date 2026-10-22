@@ -1,3 +1,24 @@
+# WikiDom
+
+Laravel website for a WikiHouse timber structure offer and an interactive configurator.
+
+- Home pages: `/`, `/sk`, `/cs`, `/en`; copy lives in `lang/{locale}/site.php`.
+- Homepage presentation: `resources/views/home.blade.php`.
+- Slovak configurator: `/glb-viewer`, using `resources/views/glb-viewer-assembly.blade.php`.
+- Pricing is an indicative component total, not a finished-house quote. The configurator does not persist designs or send enquiries; contact links open an email client.
+- Only the configurator loads Three.js, using local `public/libs` and `public/3d_objects` assets. Presentation changes must preserve its renderer, model loading, assembly logic and canvas hooks. The homepage uses a static photograph.
+
+Run the page regression tests with `php artisan test --filter=WebsitePresentationTest`.
+Before publication, verify the contact address, company identity, actual delivery scope and any technical claims against the business's documentation.
+
+### Temporary homepage photograph
+
+`public/images/wikihouse-assembly.jpg` is **Ouisharefest - Wikihouse (8710416975)** by **Javier Leiva**, used under [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), via [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Ouisharefest_-_Wikihouse_(8710416975).jpg). It is a 1280px thumbnail, displayed with a responsive CSS crop and a separate text overlay. Attribution is visible below the photograph in each language.
+
+This is an illustrative WikiHouse assembly photo, not a WikiDom project. Replace it with an authorized original before launch as planned; also update the image dimensions, localized alt text, caption, attribution and asset test. Do not remove the credit while this photograph is in use.
+
+## Framework
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">

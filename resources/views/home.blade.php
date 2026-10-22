@@ -5,27 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ __('site.meta.title') }}</title>
     <meta name="description" content="{{ __('site.meta.desc') }}">
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "/libs/three.module.js",
-            "three/addons/controls/OrbitControls.js": "/libs/OrbitControls.js",
-            "three/addons/loaders/ColladaLoader.js": "/libs/ColladaLoader.js"
-        }
-    }
-    </script>
     <style>
         :root {
-            --bg: #ffffff;
+            --bg: #fcfbf8;
             --surface: #ffffff;
-            --surface-2: #f4f6f5;
+            --surface-2: #f1f2ec;
             --wood: #f5efe6;
             --wood-strong: #c9a477;
-            --border: #e4e7ec;
-            --text: #101828;
-            --muted: #5d6b7a;
+            --border: #dddfd5;
+            --text: #20372d;
+            --muted: #5c685f;
             --subtle: #98a2b3;
-            --accent: #2f6b55;
+            --accent: #285c46;
             --accent-strong: #24564a;
             --accent-soft: #e7f1ec;
             --dark: #10241d;
@@ -71,7 +62,7 @@
         }
         h1, h2, h3 { letter-spacing: -0.025em; line-height: 1.15; }
         h2 { font-size: clamp(30px, 3.6vw, 44px); font-weight: 700; }
-        .section { padding: 112px 0; }
+        .section { padding: 88px 0; }
         .section-head { max-width: 680px; margin-bottom: 56px; }
         .section-head h2 { margin: 10px 0 16px; }
         .section-head p { font-size: 18px; color: var(--muted); }
@@ -85,13 +76,13 @@
             padding: 14px 22px;
             font-size: 16px;
             font-weight: 600;
-            border-radius: 999px;
+            border-radius: 12px;
             border: 1px solid transparent;
             transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
         }
         .btn .icon { width: 18px; height: 18px; transition: transform 0.15s; }
         .btn:hover .icon { transform: translateX(3px); }
-        .btn-primary { color: #fff; background: var(--accent); box-shadow: 0 8px 20px rgba(47, 107, 85, 0.28); }
+        .btn-primary { color: #fff; background: var(--accent); box-shadow: 0 4px 12px rgba(47, 107, 85, 0.12); }
         .btn-primary:hover { background: var(--accent-strong); transform: translateY(-1px); }
         .btn-ghost { color: var(--text); background: var(--surface); border-color: var(--border); }
         .btn-ghost:hover { border-color: var(--text); }
@@ -122,7 +113,7 @@
             border-radius: 10px;
         }
         .brand-mark .icon { width: 20px; height: 20px; stroke-width: 2; }
-        .nav-links { display: flex; align-items: center; gap: 24px; font-size: 15px; font-weight: 500; color: var(--muted); }
+        .nav-links { display: flex; align-items: center; gap: 20px; font-size: 14px; font-weight: 500; color: var(--muted); }
         .nav-links a:hover { color: var(--text); }
 
         .lang-switch {
@@ -174,7 +165,7 @@
         .footer-lang a:hover { background: rgba(255, 255, 255, 0.16); }
         .footer-lang a.is-active { background: var(--accent); }
 
-        .hero { position: relative; padding: 72px 0 96px; overflow: hidden; }
+        .hero { position: relative; padding: 72px 0 80px; overflow: hidden; background: linear-gradient(120deg, #fcfbf8 35%, #f0f2e9); }
         .hero::before {
             content: '';
             position: absolute;
@@ -184,8 +175,8 @@
             background: radial-gradient(circle, rgba(47, 107, 85, 0.12), transparent 65%);
             pointer-events: none;
         }
-        .hero-grid { position: relative; display: grid; grid-template-columns: 1.05fr 1fr; align-items: center; gap: 56px; }
-        .hero h1 { margin: 18px 0 22px; font-size: clamp(38px, 5.2vw, 64px); font-weight: 800; letter-spacing: -0.035em; }
+        .hero-grid { position: relative; display: grid; grid-template-columns: 1.1fr 1fr; align-items: center; gap: 40px; }
+        .hero h1 { margin: 22px 0 24px; font-size: clamp(36px, 4.3vw, 56px); font-weight: 650; letter-spacing: -0.045em; line-height: 1.1; }
         .hero h1 em { font-style: normal; color: var(--accent); }
         .hero-lead { max-width: 540px; font-size: 19px; color: var(--muted); }
         .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
@@ -207,50 +198,19 @@
             position: relative;
             aspect-ratio: 5 / 4;
             background: linear-gradient(160deg, #f7f3ec 0%, #e9efeb 100%);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 28px;
-            box-shadow: var(--shadow-lg);
+            border: 1px solid #d8dfd0;
+            border-radius: 120px 24px 24px 24px;
+            box-shadow: 0 20px 60px rgba(36, 54, 40, 0.08);
             overflow: hidden;
         }
-        .hero-visual canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: 0; transition: opacity 0.8s; cursor: grab; }
-        .hero-visual canvas:active { cursor: grabbing; }
-        .hero-visual.is-ready canvas { opacity: 1; }
-        .hero-fallback { position: absolute; inset: 0; display: grid; place-items: center; transition: opacity 0.6s; }
-        .hero-fallback svg { width: 72%; height: auto; }
-        .hero-visual.is-ready .hero-fallback { opacity: 0; }
-        .visual-chip {
-            position: absolute;
-            left: 18px;
-            bottom: 18px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 14px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--muted);
-            background: rgba(255, 255, 255, 0.86);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-radius: 999px;
-            box-shadow: var(--shadow);
-            pointer-events: none;
-        }
-        .visual-chip .icon { width: 16px; height: 16px; }
-        .float-card {
-            position: absolute;
-            top: 18px;
-            right: 18px;
-            padding: 12px 16px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-radius: 14px;
-            box-shadow: var(--shadow);
-            pointer-events: none;
-        }
-        .float-card strong { display: block; font-size: 22px; line-height: 1.1; letter-spacing: -0.02em; }
-        .float-card span { font-size: 12px; color: var(--muted); }
+        .hero-photo { min-width: 0; }
+        .hero-visual img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 48%; }
+        .photo-label { position: absolute; inset: auto 0 0; padding: 52px 24px 22px; color: #fff; background: linear-gradient(transparent, rgba(16, 36, 29, 0.88)); }
+        .photo-label strong { display: block; font-size: 20px; letter-spacing: -0.02em; }
+        .photo-label span { font-size: 13px; color: #e5ece7; }
+        .photo-credit { margin-top: 12px; font-size: 12px; color: var(--muted); line-height: 1.6; }
+        .photo-credit a { text-decoration: underline; text-underline-offset: 3px; }
+        .photo-credit a:hover { color: var(--accent); }
 
         .stats { border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface-2); }
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
@@ -508,10 +468,40 @@
         .footer a:hover { color: #fff; }
         .footer-note { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding-top: 28px; font-size: 13px; color: #7f948a; }
 
-        .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+        .reveal { opacity: 1; transform: none; }
         .reveal.is-visible { opacity: 1; transform: none; }
 
+        .skip-link { position: fixed; top: -100px; left: 20px; z-index: 100; padding: 12px 20px; background: var(--dark); color: #fff; }
+        .skip-link:focus { top: 12px; }
+        .mobile-menu { display: none; }
+        .offer-section { border-top: 1px solid var(--border); }
+        .offer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        .offer-card { display: flex; flex-direction: column; align-items: flex-start; padding: 32px; border: 1px solid var(--border); border-radius: 20px; background: #fff; }
+        .offer-card:first-child { background: var(--dark); color: #fff; border-color: var(--dark); }
+        .offer-number { font-size: 13px; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 28px; }
+        .offer-card:first-child .offer-number { color: #c7d8bd; }
+        .offer-card h3 { font-size: 26px; margin-bottom: 14px; }
+        .offer-card p { max-width: 440px; color: var(--muted); margin-bottom: 28px; }
+        .offer-card:first-child p { color: #c6d2ca; }
+        .offer-card .btn { margin-top: auto; }
+        .scope { margin-top: 32px; padding: 32px; background: var(--wood); border-radius: 20px; }
+        .scope h3 { font-size: 24px; margin-bottom: 24px; }
+        .scope-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; }
+        .scope h4 { margin-bottom: 8px; font-size: 15px; }
+        .scope p { font-size: 15px; color: var(--muted); }
+        .scope .price-note { margin-top: 24px; padding-top: 20px; border-top: 1px solid #d9d2c5; font-size: 14px; }
+        .technical-note { margin-top: 28px; font-size: 14px; color: var(--muted); max-width: 760px; }
+        .contact-section { padding: 72px 0; background: var(--wood); border-top: 1px solid var(--border); }
+        .contact-grid { display: flex; align-items: center; justify-content: space-between; gap: 40px; }
+        .contact-grid h2 { max-width: 640px; margin-bottom: 16px; }
+        .contact-grid p { max-width: 640px; color: var(--muted); font-size: 18px; }
+        .contact-grid .btn { flex-shrink: 0; }
+        .nav-links .btn-primary { color: #fff; }
+        .nav-links .btn-primary:hover { color: #fff; }
+        #content:focus { outline: none; }
+
         @media (max-width: 1080px) {
+            .nav-links { gap: 12px; }
             .feature-grid, .type-grid { grid-template-columns: repeat(2, 1fr); }
             .service-grid { grid-template-columns: 1fr; }
             .steps { grid-template-columns: 1fr; gap: 0; }
@@ -520,7 +510,17 @@
         }
         @media (max-width: 900px) {
             .section { padding: 80px 0; }
-            .nav-links a:not(.btn) { display: none; }
+            .nav-links { display: none; }
+            .nav-inner { gap: 12px; }
+            .mobile-menu { display: block; }
+            .mobile-menu summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; font-weight: 600; }
+            .mobile-menu summary::-webkit-details-marker { display: none; }
+            .mobile-menu[open] summary { background: var(--accent-soft); }
+            .mobile-menu nav { position: absolute; left: 16px; right: 16px; top: 80px; display: grid; padding: 16px; gap: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-lg); max-height: calc(100dvh - 100px); overflow-y: auto; }
+            .mobile-menu nav > a { padding: 12px; border-radius: 8px; }
+            .mobile-menu nav > a:hover { background: var(--accent-soft); }
+            .mobile-menu .lang-switch { justify-self: start; margin: 12px 0 4px; }
+            .mobile-menu .lang-link { padding: 10px 14px; }
             .hero { padding: 40px 0 72px; }
             .hero-grid, .about-grid, .made-grid, .cta-band, .faq-grid, .carbon-grid, .paths { grid-template-columns: 1fr; gap: 40px; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
@@ -528,13 +528,23 @@
             .stat:nth-child(n + 3) { border-top: 1px solid var(--border); }
             .cta-band { padding: 36px 24px; }
             .footer-grid { grid-template-columns: 1fr; gap: 32px; }
+            .contact-grid { flex-direction: column; align-items: flex-start; gap: 24px; }
         }
         @media (max-width: 560px) {
             .container { padding: 0 20px; }
             .feature-grid, .made-list, .type-grid { grid-template-columns: 1fr; }
             .hero-actions .btn { width: 100%; }
-            .float-card { display: none; }
             .faq-list summary { font-size: 16px; }
+            .offer-grid, .scope-grid { grid-template-columns: 1fr; gap: 20px; }
+            .offer-card, .scope { padding: 24px; }
+            .hero h1 { font-size: clamp(30px, 8vw, 44px); }
+            .hero-lead { font-size: 17px; }
+            .section { padding: 56px 0; }
+            .section-head { margin-bottom: 28px; }
+            .hero-visual { border-top-left-radius: 72px; }
+            .photo-label { padding: 40px 18px 16px; }
+            .photo-label strong { font-size: 18px; }
+            .type-meta { padding: 20px; }
         }
         @media (prefers-reduced-motion: reduce) {
             html { scroll-behavior: auto; }
@@ -544,6 +554,7 @@
     </style>
 </head>
 <body>
+    <a class="skip-link" href="#content">{{ __('site.experience.skip') }}</a>
     <svg width="0" height="0" style="position:absolute" aria-hidden="true">
         <symbol id="flag-sk" viewBox="0 0 900 600">
             <rect width="900" height="200" fill="#ffffff"/>
@@ -604,13 +615,10 @@
                 WikiDom
             </a>
             <nav class="nav-links" aria-label="{{ __('site.nav.aria_main') }}">
+                <a href="#ponuka">{{ __('site.experience.offer') }}</a>
                 <a href="#system">{{ __('site.nav.system') }}</a>
-                @if (Lang::has('site.types.title'))
-                    <a href="#typy">{{ __('site.nav.projects') }}</a>
-                @endif
-                <a href="#vyhody">{{ __('site.nav.benefits') }}</a>
-                <a href="#vyroba">{{ __('site.nav.production') }}</a>
                 <a href="#postup">{{ __('site.nav.process') }}</a>
+                <a href="#kontakt">{{ __('site.footer.col_contact') }}</a>
                 <a class="btn btn-primary btn-sm" href="/glb-viewer">{{ __('site.nav.configurator') }}</a>
                 <div class="lang-switch" aria-label="Jazyk">
                     <a href="/sk" class="lang-link {{ ($locale ?? 'sk') === 'sk' ? 'is-active' : '' }}" title="Slovenčina">
@@ -624,19 +632,35 @@
                     </a>
                 </div>
             </nav>
+            <details class="mobile-menu">
+                <summary>{{ __('site.experience.menu') }} <svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg></summary>
+                <nav aria-label="{{ __('site.nav.aria_main') }}">
+                    <a href="#ponuka">{{ __('site.experience.offer') }}</a>
+                    <a href="#system">{{ __('site.nav.system') }}</a>
+                    <a href="#postup">{{ __('site.nav.process') }}</a>
+                    <a href="#faq">{{ __('site.nav.faq') }}</a>
+                    <a href="#kontakt">{{ __('site.footer.col_contact') }}</a>
+                    <a class="btn btn-primary" href="/glb-viewer">{{ __('site.nav.configurator') }}</a>
+                    <div class="lang-switch" aria-label="Language">
+                        @foreach (['sk' => 'SK', 'cs' => 'CZ', 'en' => 'EN'] as $code => $label)
+                            <a href="/{{ $code }}" lang="{{ $code }}" class="lang-link {{ ($locale ?? 'sk') === $code ? 'is-active' : '' }}" @if (($locale ?? 'sk') === $code) aria-current="page" @endif>{{ $label }}</a>
+                        @endforeach
+                    </div>
+                </nav>
+            </details>
         </div>
     </header>
 
-    <main>
+    <main id="content" tabindex="-1">
         <section class="hero">
             <div class="container hero-grid">
                 <div>
-                    <span class="eyebrow"><svg class="badge-flag" aria-hidden="true"><use href="#flag-{{ ($locale ?? 'sk') === 'cs' ? 'cz' : (($locale ?? 'sk') === 'en' ? 'en' : 'sk') }}"/></svg> {{ __('site.hero.eyebrow') }}</span>
+                    <span class="eyebrow">{{ __('site.hero.eyebrow') }}</span>
                     <h1>{!! __('site.hero.title_html') !!}</h1>
                     <p class="hero-lead">{{ __('site.hero.lead') }}</p>
                     <div class="hero-actions">
                         <a class="btn btn-primary" href="/glb-viewer">{{ __('site.hero.cta_primary') }} <svg class="icon"><use href="#i-arrow"/></svg></a>
-                        <a class="btn btn-ghost" href="#system">{{ __('site.hero.cta_secondary') }}</a>
+                        <a class="btn btn-ghost" href="#ponuka">{{ __('site.hero.cta_secondary') }}</a>
                     </div>
                     <ul class="checks">
                         <li><svg class="icon"><use href="#i-check"/></svg>{{ __('site.hero.check_1') }}</li>
@@ -644,76 +668,54 @@
                         <li><svg class="icon"><use href="#i-check"/></svg>{{ __('site.hero.check_3') }}</li>
                     </ul>
                 </div>
-                <div class="hero-visual" id="heroVisual">
-                    <div class="hero-fallback" aria-hidden="true">
-                        <svg viewBox="0 0 200 140">
-                            <ellipse cx="100" cy="122" rx="82" ry="9" fill="#e7f1ec"/>
-                            <rect x="58" y="103.5" width="5" height="19" fill="#b7c4bd"/>
-                            <rect x="150" y="96.5" width="5" height="26" fill="#b7c4bd"/>
-                            <path d="M34 108V58l22-14 0 60z" fill="#1f3a30" stroke="#16211c" stroke-width="3" stroke-linejoin="round"/>
-                            <path d="M56 44 158 36 158 96 56 104z" fill="#2f6b55" stroke="#16211c" stroke-width="3" stroke-linejoin="round"/>
-                            <g stroke="#16211c" stroke-width="1" opacity="0.35">
-                                <line x1="70" y1="45" x2="70" y2="102"/>
-                                <line x1="84" y1="43.5" x2="84" y2="100.5"/>
-                                <line x1="98" y1="42" x2="98" y2="99"/>
-                                <line x1="112" y1="40.5" x2="112" y2="97.5"/>
-                                <line x1="126" y1="39" x2="126" y2="96"/>
-                                <line x1="140" y1="37.5" x2="140" y2="94.5"/>
-                            </g>
-                            <path d="M30 58 56 44 158 36 172 44 146 58 56 66z" fill="#16211c" stroke="#16211c" stroke-width="3" stroke-linejoin="round"/>
-                            <rect x="96" y="52" width="46" height="34" rx="1.5" fill="#cfe3f3" stroke="#16211c" stroke-width="3"/>
-                            <line x1="119" y1="52" x2="119" y2="86" stroke="#16211c" stroke-width="2"/>
-                            <rect x="64" y="66" width="14" height="36" rx="1" fill="#16211c" stroke="#16211c" stroke-width="3"/>
-                            <circle cx="75" cy="85" r="1.3" fill="#cfe3f3"/>
-                        </svg>
+                <figure class="hero-photo">
+                    <div class="hero-visual">
+                        <img src="/images/wikihouse-assembly.jpg" width="1280" height="1280" fetchpriority="high" alt="{{ __('site.hero.photo_alt') }}">
+                        <div class="photo-label">
+                            <strong>{{ __('site.hero.photo_title') }}</strong>
+                            <span>{{ __('site.hero.photo_label') }}</span>
+                        </div>
                     </div>
-                    <canvas id="heroCanvas" aria-label="{{ __('site.hero.canvas_label') }}"></canvas>
-                    <div class="float-card"><strong>{{ __('site.hero.float_card_val') }}</strong><span>{{ __('site.hero.float_card_lbl') }}</span></div>
-                    <div class="visual-chip"><svg class="icon"><use href="#i-rotate"/></svg>{{ __('site.hero.chip_3d') }}</div>
-                </div>
+                    <figcaption class="photo-credit">
+                        {{ __('site.hero.photo_credit') }}
+                        <a href="https://commons.wikimedia.org/wiki/File:Ouisharefest_-_Wikihouse_(8710416975).jpg" target="_blank" rel="noopener">Javier Leiva / Wikimedia Commons</a>
+                        · <a href="https://creativecommons.org/licenses/by/2.0/" target="_blank" rel="noopener">CC BY 2.0</a>
+                    </figcaption>
+                </figure>
             </div>
         </section>
 
-        <section class="stats" aria-label="{{ __('site.stats.source') }}">
+        <section class="section offer-section" id="ponuka">
             <div class="container">
-                <div class="stats-grid">
-                    <div class="stat"><strong>{{ __('site.stats.s1_val') }}</strong><span>{{ __('site.stats.s1_lbl') }}</span></div>
-                    <div class="stat"><strong>{{ __('site.stats.s2_val') }}</strong><span>{{ __('site.stats.s2_lbl') }}</span></div>
-                    <div class="stat"><strong>{{ __('site.stats.s3_val') }}</strong><span>{{ __('site.stats.s3_lbl') }}</span></div>
-                    <div class="stat"><strong>{{ __('site.stats.s4_val') }}</strong><span>{{ __('site.stats.s4_lbl') }}</span></div>
+                <div class="section-head">
+                    <span class="eyebrow">{{ __('site.experience.offer') }}</span>
+                    <h2>{{ __('site.experience.intro') }}</h2>
+                    <p>{{ __('site.experience.intro_lead') }}</p>
                 </div>
-                <p class="source">{{ __('site.stats.source') }}</p>
-            </div>
-        </section>
-
-        @if (Lang::hasForLocale('site.maker.title_html'))
-        <section class="section maker" id="architekt">
-            <div class="container">
-                <div class="maker-head reveal">
-                    <span class="eyebrow">{{ __('site.maker.eyebrow') }}</span>
-                    <h2>{!! __('site.maker.title_html') !!}</h2>
-                    <p>{{ __('site.maker.lead') }}</p>
+                <div class="offer-grid">
+                    <article class="offer-card">
+                        <span class="offer-number">01 / {{ __('site.nav.configurator') }}</span>
+                        <h3>{{ __('site.experience.offer_1_title') }}</h3>
+                        <p>{{ __('site.experience.offer_1_desc') }}</p>
+                        <a class="btn btn-light" href="/glb-viewer">{{ __('site.experience.offer_1_cta') }} <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                    </article>
+                    <article class="offer-card">
+                        <span class="offer-number">02 / WikiDom</span>
+                        <h3>{{ __('site.experience.offer_2_title') }}</h3>
+                        <p>{{ __('site.experience.offer_2_desc') }}</p>
+                        <a class="btn btn-ghost" href="#kontakt">{{ __('site.experience.offer_2_cta') }} <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+                    </article>
                 </div>
-                <blockquote class="quote reveal">
-                    <p>{{ __('site.maker.quote') }}</p>
-                    <cite>{{ __('site.maker.quote_by') }}</cite>
-                </blockquote>
-                <div class="maker-cards">
-                    @foreach ([1 => 'i-cube', 2 => 'i-cnc', 3 => 'i-grid', 4 => 'i-people'] as $n => $icon)
-                        <article class="maker-card reveal">
-                            <span class="feature-icon"><svg class="icon"><use href="#{{ $icon }}"/></svg></span>
-                            <h3>{{ __('site.maker.c' . $n . '_title') }}</h3>
-                            <p>{{ __('site.maker.c' . $n . '_desc') }}</p>
-                        </article>
-                    @endforeach
-                </div>
-                <div class="maker-close reveal">
-                    <p>{{ __('site.maker.closing') }}</p>
-                    <a class="btn btn-primary" href="/glb-viewer">{{ __('site.maker.cta') }} <svg class="icon"><use href="#i-arrow"/></svg></a>
+                <div class="scope">
+                    <h3>{{ __('site.experience.scope_title') }}</h3>
+                    <div class="scope-grid">
+                        <div><h4>{{ __('site.experience.included') }}</h4><p>{{ __('site.experience.included_text') }}</p></div>
+                        <div><h4>{{ __('site.experience.separate') }}</h4><p>{{ __('site.experience.separate_text') }}</p></div>
+                    </div>
+                    <p class="price-note">{{ __('site.experience.price_note') }}</p>
                 </div>
             </div>
         </section>
-        @endif
 
         <section class="section" id="system">
             <div class="container about-grid">
@@ -798,89 +800,21 @@
             <div class="container">
                 <div class="section-head center reveal">
                     <span class="eyebrow">{{ __('site.benefits.eyebrow') }}</span>
-                    <h2>{{ __('site.benefits.title') }}</h2>
-                    <p>{{ __('site.benefits.lead') }}</p>
+                    <h2>{{ __('site.experience.benefits_title') }}</h2>
+                    <p>{{ __('site.experience.benefits_lead') }}</p>
                 </div>
                 <div class="feature-grid">
-                    <article class="feature reveal">
-                        <span class="feature-icon"><svg class="icon"><use href="#i-ruler"/></svg></span>
-                        <span class="metric">{{ __('site.benefits.f1_metric') }}</span>
-                        <h3>{{ __('site.benefits.f1_title') }}</h3>
-                        <p>{{ __('site.benefits.f1_desc') }}</p>
-                    </article>
-                    <article class="feature reveal">
-                        <span class="feature-icon"><svg class="icon"><use href="#i-thermo"/></svg></span>
-                        <span class="metric">{{ __('site.benefits.f2_metric') }}</span>
-                        <h3>{{ __('site.benefits.f2_title') }}</h3>
-                        <p>{{ __('site.benefits.f2_desc') }}</p>
-                    </article>
-                    <article class="feature reveal">
-                        <span class="feature-icon"><svg class="icon"><use href="#i-weight"/></svg></span>
-                        <span class="metric">{{ __('site.benefits.f3_metric') }}</span>
-                        <h3>{{ __('site.benefits.f3_title') }}</h3>
-                        <p>{{ __('site.benefits.f3_desc') }}</p>
-                    </article>
-                    <article class="feature reveal">
-                        <span class="feature-icon"><svg class="icon"><use href="#i-clock"/></svg></span>
-                        <span class="metric">{{ __('site.benefits.f4_metric') }}</span>
-                        <h3>{{ __('site.benefits.f4_title') }}</h3>
-                        <p>{{ __('site.benefits.f4_desc') }}</p>
-                    </article>
-                    <article class="feature reveal">
-                        <span class="feature-icon"><svg class="icon"><use href="#i-leaf"/></svg></span>
-                        <span class="metric">{{ __('site.benefits.f5_metric') }}</span>
-                        <h3>{{ __('site.benefits.f5_title') }}</h3>
-                        <p>{{ __('site.benefits.f5_desc') }}</p>
-                    </article>
-                    <article class="feature reveal">
-                        <span class="feature-icon"><svg class="icon"><use href="#i-shield"/></svg></span>
-                        <span class="metric">{{ __('site.benefits.f6_metric') }}</span>
-                        <h3>{{ __('site.benefits.f6_title') }}</h3>
-                        <p>{{ __('site.benefits.f6_desc') }}</p>
-                    </article>
-                    <article class="feature reveal">
-                        <span class="feature-icon"><svg class="icon"><use href="#i-grid"/></svg></span>
-                        <span class="metric">{{ __('site.benefits.f7_metric') }}</span>
-                        <h3>{{ __('site.benefits.f7_title') }}</h3>
-                        <p>{{ __('site.benefits.f7_desc') }}</p>
-                    </article>
-                    <article class="feature reveal">
-                        <span class="feature-icon"><svg class="icon"><use href="#i-cycle"/></svg></span>
-                        <span class="metric">{{ __('site.benefits.f8_metric') }}</span>
-                        <h3>{{ __('site.benefits.f8_title') }}</h3>
-                        <p>{{ __('site.benefits.f8_desc') }}</p>
-                    </article>
+                    @foreach (__('site.experience.benefits') as $benefit)
+                        <article class="feature">
+                            <span class="feature-icon"><svg class="icon" aria-hidden="true"><use href="#{{ ['i-ruler', 'i-cnc', 'i-house', 'i-cycle'][$loop->index] }}"/></svg></span>
+                            <h3>{{ $benefit['title'] }}</h3>
+                            <p>{{ $benefit['text'] }}</p>
+                        </article>
+                    @endforeach
                 </div>
+                <p class="technical-note">{{ __('site.experience.technical_note') }}</p>
             </div>
         </section>
-
-        @if (Lang::hasForLocale('site.carbon.title'))
-        <section class="section carbon" id="uhlik">
-            <div class="container carbon-grid">
-                <div class="carbon-text reveal">
-                    <span class="eyebrow">{{ __('site.carbon.eyebrow') }}</span>
-                    <h2>{{ __('site.carbon.title') }}</h2>
-                    <p>{{ __('site.carbon.lead') }}</p>
-                </div>
-                <div class="chart reveal" role="img" aria-label="{{ __('site.carbon.unit') }}">
-                    <p class="chart-unit">{{ __('site.carbon.unit') }}</p>
-                    <div class="bar">
-                        <div class="bar-head"><span>{{ __('site.carbon.bar1_lbl') }}</span><span>{{ __('site.carbon.bar1_val') }}</span></div>
-                        <div class="bar-track"><div class="bar-fill" style="width: 100%"></div></div>
-                    </div>
-                    <div class="bar">
-                        <div class="bar-head"><span>{{ __('site.carbon.bar2_lbl') }}</span><span>{{ __('site.carbon.bar2_val') }}</span></div>
-                        <div class="bar-track"><div class="bar-fill is-mid" style="width: 25%"></div></div>
-                    </div>
-                    <div class="bar">
-                        <div class="bar-head"><span>{{ __('site.carbon.bar3_lbl') }}</span><span>{{ __('site.carbon.bar3_val') }}</span></div>
-                        <div class="bar-track"><div class="bar-fill is-neg" style="width: 70%"></div></div>
-                    </div>
-                    <p class="chart-note">{{ __('site.carbon.note') }}</p>
-                </div>
-            </div>
-        </section>
-        @endif
 
         <section class="section made" id="vyroba">
             <div class="container made-grid">
@@ -943,20 +877,6 @@
                         <p>{{ __('site.services.sv3_desc') }}</p>
                     </article>
                 </div>
-                <h3 class="paths-title reveal">{{ __('site.services.paths_title') }}</h3>
-                <div class="paths">
-                    <div class="path reveal">
-                        <span class="eyebrow">{{ __('site.services.path_a_label') }}</span>
-                        <h3>{{ __('site.services.path_a_title') }}</h3>
-                        <p>{{ __('site.services.path_a_desc') }}</p>
-                    </div>
-                    <div class="path is-alt reveal">
-                        <span class="eyebrow">{{ __('site.services.path_b_label') }}</span>
-                        <h3>{{ __('site.services.path_b_title') }}</h3>
-                        <p>{{ __('site.services.path_b_desc') }}</p>
-                        <a class="btn btn-light" href="/glb-viewer">{{ __('site.services.path_b_cta') }} <svg class="icon"><use href="#i-arrow"/></svg></a>
-                    </div>
-                </div>
             </div>
         </section>
         @endif
@@ -1008,7 +928,7 @@
                         <a class="btn btn-primary" href="/glb-viewer">{{ __('site.cta_band.button') }} <svg class="icon"><use href="#i-arrow"/></svg></a>
                     </div>
                     <div class="strip" aria-hidden="true">
-                        <div class="strip-head"><span>{{ __('site.cta_band.your_layout') }}</span><span>{{ __('site.cta_band.segments_count') }}</span></div>
+                        <div class="strip-head"><span>{{ __('site.experience.preview') }}</span><span>WikiDom</span></div>
                         <div class="strip-row">
                             <span class="seg is-end"><svg viewBox="0 0 64 48"><path class="wall" d="M8 44V20L32 5l24 15v24z"/><rect class="glass" x="27" y="17" width="10" height="9" rx="1.5"/></svg></span>
                             <span class="seg"><svg viewBox="0 0 64 48"><rect class="wall" x="6" y="6" width="52" height="36" rx="3"/><rect class="glass" x="21" y="13" width="22" height="18" rx="1.5"/></svg></span>
@@ -1017,7 +937,7 @@
                             <span class="seg"><svg viewBox="0 0 64 48"><rect class="wall" x="6" y="6" width="52" height="36" rx="3"/><rect class="glass" x="21" y="13" width="22" height="18" rx="1.5"/></svg></span>
                             <span class="seg is-end"><svg viewBox="0 0 64 48"><path class="wall" d="M8 44V20L32 5l24 15v24z"/><rect class="glass" x="27" y="17" width="10" height="9" rx="1.5"/></svg></span>
                         </div>
-                        <div class="strip-foot"><span>{{ __('site.cta_band.price_label') }}</span><strong>{{ __('site.cta_band.price_val') }}</strong></div>
+                        <div class="strip-foot"><span>{{ __('site.experience.preview_note') }}</span></div>
                     </div>
                 </div>
             </div>
@@ -1059,6 +979,15 @@
                         @endforeach
                     @endif
                 </div>
+            </div>
+        </section>
+        <section class="contact-section" id="kontakt">
+            <div class="container contact-grid">
+                <div>
+                    <h2>{{ __('site.experience.contact') }}</h2>
+                    <p>{{ __('site.experience.contact_lead') }}</p>
+                </div>
+                <a class="btn btn-primary" href="mailto:{{ __('site.footer.email') }}">{{ __('site.experience.contact_cta') }} <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
             </div>
         </section>
     </main>
@@ -1108,6 +1037,17 @@
         window.addEventListener('scroll', onScroll, { passive: true });
         onScroll();
 
+        const mobileMenu = document.querySelector('.mobile-menu');
+        mobileMenu.addEventListener('click', (event) => {
+            if (event.target.closest('a')) mobileMenu.open = false;
+        });
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && mobileMenu.open) {
+                mobileMenu.open = false;
+                mobileMenu.querySelector('summary').focus();
+            }
+        });
+
         if ('IntersectionObserver' in window) {
             const revealer = new IntersectionObserver((entries) => {
                 entries.forEach((entry) => {
@@ -1120,147 +1060,6 @@
         } else {
             document.querySelectorAll('.reveal').forEach((el) => el.classList.add('is-visible'));
         }
-    </script>
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { ColladaLoader } from 'three/addons/loaders/ColladaLoader.js';
-
-        const HOUSE = ['endwall_#1', 'segment_#4', 'segment_#1', 'segment_#11', 'segment_#4', 'endwall_##1'];
-        const SEGMENT_WIDTH = 1.2;
-        const holder = document.getElementById('heroVisual');
-        const canvas = document.getElementById('heroCanvas');
-        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-        // DAE je Z-UP v palcoch; rotáciu loadera vynulujeme a dielec vyrovnáme podľa bbox (každý má vlastný posun zo SketchUpu).
-        // Zrkadlené DAE (endwall_##) majú v dátach obrátené vinutie, ale normály zostali von; three.js pri zápornom determinante vinutie prehodí ešte raz, preto ho vrátime späť.
-        function fixMirroredWinding(root) {
-            root.updateMatrixWorld(true);
-            root.traverse((obj) => {
-                if (!obj.isMesh || obj.matrixWorld.determinant() >= 0) return;
-                const geometry = obj.geometry;
-                if (geometry.index) {
-                    const ix = geometry.index.array;
-                    for (let i = 0; i + 2 < ix.length; i += 3) [ix[i + 1], ix[i + 2]] = [ix[i + 2], ix[i + 1]];
-                    geometry.index.needsUpdate = true;
-                    return;
-                }
-                Object.values(geometry.attributes).forEach((attr) => {
-                    const size = attr.itemSize;
-                    const arr = attr.array;
-                    for (let t = 0; (t + 3) * size <= arr.length; t += 3) {
-                        for (let k = 0; k < size; k++) {
-                            const i1 = (t + 1) * size + k;
-                            const i2 = (t + 2) * size + k;
-                            [arr[i1], arr[i2]] = [arr[i2], arr[i1]];
-                        }
-                    }
-                    attr.needsUpdate = true;
-                });
-            });
-        }
-
-        function loadModel(loader, name) {
-            return new Promise((resolve) => {
-                loader.load('/3d_objects/' + encodeURIComponent(name) + '.dae', (collada) => {
-                    collada.scene.rotation.set(0, 0, 0);
-                    const part = new THREE.Group();
-                    part.add(collada.scene);
-                    fixMirroredWinding(part);
-                    part.updateMatrixWorld(true);
-                    part.userData.min = new THREE.Box3().setFromObject(part).min.clone();
-                    resolve(part);
-                }, undefined, () => resolve(null));
-            });
-        }
-
-        async function initHero() {
-            let renderer;
-            try {
-                renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-            } catch (error) {
-                return;
-            }
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-            renderer.outputColorSpace = THREE.SRGBColorSpace;
-
-            const scene = new THREE.Scene();
-            const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 200);
-            camera.up.set(0, 0, 1);
-            scene.add(new THREE.HemisphereLight(0xffffff, 0xd9d2c5, 1.6));
-            const sun = new THREE.DirectionalLight(0xffffff, 1.8);
-            sun.position.set(-6, -4, 10);
-            scene.add(sun);
-
-            // Názvy priečinkov s '#' (textúry) treba zakódovať, inak ich prehliadač berie ako fragment URL.
-            const manager = new THREE.LoadingManager();
-            manager.setURLModifier((url) => url.replace(/#/g, '%23'));
-            const loader = new ColladaLoader(manager);
-            const parts = await Promise.all(HOUSE.map((name) => loadModel(loader, name)));
-            const house = new THREE.Group();
-            parts.filter(Boolean).forEach((part, index) => {
-                const min = part.userData.min;
-                part.position.set(-min.x, -(index + 1) * SEGMENT_WIDTH - min.y, -min.z);
-                house.add(part);
-            });
-            if (!house.children.length) return;
-
-            const box = new THREE.Box3().setFromObject(house);
-            const center = box.getCenter(new THREE.Vector3());
-            house.position.set(-center.x, -center.y, -box.min.z);
-            scene.add(house);
-
-            const size = box.getSize(new THREE.Vector3());
-            const groundRadius = Math.max(size.x, size.y) * 0.9;
-            const ground = new THREE.Mesh(
-                new THREE.CircleGeometry(groundRadius, 64),
-                new THREE.MeshBasicMaterial({ color: 0xdfe8e2, transparent: true, opacity: 0.85 })
-            );
-            ground.position.z = -0.01;
-            scene.add(ground);
-
-            const target = new THREE.Vector3(0, 0, size.z * 0.45);
-            const radius = size.length() / 2;
-            camera.position.copy(target).add(new THREE.Vector3(-1, -0.85, 0.55).normalize().multiplyScalar(radius * 3));
-
-            const controls = new OrbitControls(camera, canvas);
-            controls.target.copy(target);
-            controls.enableDamping = true;
-            controls.enableZoom = false;
-            controls.enablePan = false;
-            controls.minPolarAngle = 0.35;
-            controls.maxPolarAngle = Math.PI / 2 - 0.05;
-            controls.autoRotate = !reduceMotion;
-            controls.autoRotateSpeed = 0.9;
-            controls.addEventListener('start', () => { controls.autoRotate = false; });
-
-            function resize() {
-                const width = holder.clientWidth || 1;
-                const height = holder.clientHeight || 1;
-                camera.aspect = width / height;
-                const vFov = THREE.MathUtils.degToRad(camera.fov);
-                const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
-                const distance = (radius / Math.sin(Math.min(vFov, hFov) / 2)) * 1.02;
-                const direction = camera.position.clone().sub(controls.target).normalize();
-                camera.position.copy(controls.target).addScaledVector(direction, distance);
-                camera.updateProjectionMatrix();
-                renderer.setSize(width, height, false);
-            }
-            new ResizeObserver(resize).observe(holder);
-            resize();
-
-            let visible = true;
-            new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; }).observe(holder);
-
-            renderer.setAnimationLoop(() => {
-                if (!visible) return;
-                controls.update();
-                renderer.render(scene, camera);
-            });
-            holder.classList.add('is-ready');
-        }
-
-        initHero().catch((error) => console.error('Hero 3D', error));
     </script>
 </body>
 </html>

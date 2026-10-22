@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WikiDom – Konfigurátor domu</title>
+    <meta name="description" content="Poskladajte si prvý návrh domu WikiDom. Vyberte čelné steny a segmenty, prezrite si rozmery a orientačnú cenu dielov.">
     <script type="importmap">
     {
         "imports": {
@@ -17,14 +18,14 @@
         :root {
             --bg: #f6f7f9;
             --surface: #ffffff;
-            --surface-2: #f2f4f7;
+            --surface-2: #f3f4ee;
             --stage: #e9edf1;
-            --border: #e4e7ec;
-            --text: #101828;
-            --muted: #667085;
-            --subtle: #98a2b3;
+            --border: #dde2d8;
+            --text: #20372d;
+            --muted: #606d64;
+            --subtle: #67766c;
             --icon: #475467;
-            --accent: #2f6b55;
+            --accent: #285c46;
             --accent-strong: #24564a;
             --accent-soft: #e7f1ec;
             --ring: rgba(47, 107, 85, 0.35);
@@ -48,7 +49,7 @@
             overflow: hidden;
         }
         button { font: inherit; color: inherit; }
-        button:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+        button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
 
         .app {
             display: grid;
@@ -169,18 +170,18 @@
             display: flex;
             flex-direction: column;
             min-height: 0;
-            background: var(--surface);
+            background: #fcfbf8;
             border-left: 1px solid var(--border);
         }
-        .panel-head { padding: 28px 28px 4px; }
+        .panel-head { padding: 28px 28px 20px; border-bottom: 1px solid var(--border); background: #f1f3eb; }
         .back-link {
             display: inline-flex;
             align-items: center;
             gap: 6px;
             margin-bottom: 18px;
             font-size: 13px;
-            font-weight: 500;
-            color: var(--muted);
+            font-weight: 600;
+            color: var(--accent);
             text-decoration: none;
         }
         .back-link:hover { color: var(--text); }
@@ -191,8 +192,10 @@
             text-transform: uppercase;
             color: var(--accent);
         }
-        .panel-head h1 { margin: 4px 0 6px; font-size: 26px; line-height: 1.2; font-weight: 700; letter-spacing: -0.02em; }
+        .panel-head h1 { margin: 8px 0 10px; font-size: 28px; line-height: 1.15; font-weight: 650; letter-spacing: -0.035em; }
         .lead { font-size: 14px; color: var(--muted); }
+        .workspace-label { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; padding: 5px 10px; border: 1px solid #cbd8c5; border-radius: 6px; font-size: 11px; font-weight: 600; color: var(--accent); }
+        .workspace-label::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
         .panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 28px 24px; }
         .step { padding-top: 24px; }
         .step + .step { margin-top: 24px; border-top: 1px solid var(--border); }
@@ -205,9 +208,9 @@
             height: 28px;
             font-size: 13px;
             font-weight: 700;
-            color: #fff;
-            background: var(--accent);
-            border-radius: 50%;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border-radius: 8px;
         }
         .step-head h2 { font-size: 16px; line-height: 28px; font-weight: 600; }
         .step-head p { font-size: 13px; color: var(--muted); }
@@ -226,7 +229,7 @@
             align-items: center;
             gap: 12px;
             width: 100%;
-            padding: 8px 12px 8px 8px;
+            padding: 12px 12px 12px 8px;
             text-align: left;
             background: var(--surface);
             border: 1px solid var(--border);
@@ -235,7 +238,7 @@
             cursor: pointer;
             transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
         }
-        .card:hover { border-color: var(--accent); box-shadow: var(--shadow-lg); transform: translateY(-1px); }
+        .card:hover { border-color: var(--accent); box-shadow: 0 3px 12px rgba(40, 92, 70, 0.09); transform: translateY(-1px); }
         .card:active { transform: translateY(0); }
         .card-art {
             flex: none;
@@ -296,8 +299,8 @@
             display: grid;
             place-items: center;
             flex: none;
-            width: 38px;
-            height: 38px;
+            width: 44px;
+            height: 44px;
             color: var(--accent);
             background: var(--accent-soft);
             border: none;
@@ -345,8 +348,8 @@
             display: grid;
             place-items: center;
             flex: none;
-            width: 32px;
-            height: 32px;
+            width: 44px;
+            height: 44px;
             border-radius: 8px;
         }
         .seq-remove {
@@ -407,6 +410,12 @@
             cursor: pointer;
         }
         .link-btn:hover { color: var(--text); text-decoration: underline; }
+        .estimate-note { margin-top: 8px; color: var(--muted); font-size: 12px; }
+        .estimate-details { margin-top: 10px; font-size: 12px; color: var(--muted); }
+        .estimate-details summary { cursor: pointer; padding: 5px 0; font-weight: 600; color: var(--accent); }
+        .estimate-details p { margin: 6px 0 10px; }
+        .estimate-details a { color: var(--accent); text-underline-offset: 3px; }
+        .summary { max-height: 48dvh; overflow-y: auto; }
 
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes shimmer { to { background-position: -200% 0; } }
@@ -415,7 +424,7 @@
 
         @media (max-width: 1200px) {
             .app { grid-template-columns: minmax(0, 1fr) 370px; }
-            .panel-head { padding: 24px 22px 4px; }
+            .panel-head { padding: 24px 22px 20px; }
             .panel-body { padding: 0 22px 22px; }
             .summary { padding: 16px 22px 20px; }
         }
@@ -426,7 +435,7 @@
             .stage { height: 55vh; height: 55svh; min-height: 300px; }
             .panel { border-left: none; border-top: 1px solid var(--border); }
             .panel-body { overflow: visible; }
-            .summary { position: sticky; bottom: 0; z-index: 5; padding: 12px 20px 14px; }
+            .summary { padding: 20px; max-height: none; overflow: visible; }
             .summary-stats dd { font-size: 15px; }
             .summary-price { margin-top: 10px; padding-top: 10px; }
             .summary-price strong { font-size: 22px; }
@@ -465,11 +474,12 @@
             <header class="panel-head">
                 <a class="back-link" href="/">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
-                    Späť na úvod
+                    WikiDom / Späť na úvod
                 </a>
-                <p class="eyebrow">WikiDom</p>
-                <h1>Navrhnite si svoj dom</h1>
-                <p class="lead">Pridajte segmenty a dom sa s každým z nich predĺži o 1,2 m. Zmeny hneď uvidíte v 3D.</p>
+                <p class="eyebrow">Váš priestor sa začína tu</p>
+                <h1>Dom podľa vašej predstavy.</h1>
+                <p class="lead">Začnite čelnými stenami. Každý pridaný segment predĺži dom o 1,2 m — výsledok uvidíte priamo v náhľade.</p>
+                <span class="workspace-label">Nezáväzný návrh · bez registrácie</span>
             </header>
             <div class="panel-body">
                 <section class="step" aria-labelledby="stepEnds">
@@ -487,7 +497,7 @@
                         <span class="step-num">2</span>
                         <div>
                             <h2 id="step1">Pridajte segmenty</h2>
-                            <p>Kliknite na typ steny. Môžete ho pridať viackrát.</p>
+                            <p>Tlačidlom + pridajte diel. Rovnaký typ môžete použiť viackrát.</p>
                         </div>
                     </div>
                     <div class="catalog" id="objectsList">
@@ -515,9 +525,16 @@
                     <div><dt>Segmenty</dt><dd id="sumCount">–</dd></div>
                 </dl>
                 <div class="summary-price">
-                    <span>Orientačná cena</span>
+                    <span>Orientačný súčet dielov</span>
                     <strong id="sumPrice">–</strong>
                 </div>
+                <p class="estimate-note">Prvý odhad, nie cena dokončeného domu.</p>
+                <details class="estimate-details">
+                    <summary>Čo znamená táto cena?</summary>
+                    <p>Súčet vychádza z vybraných segmentov a čelných stien. Základy, dokončenie, dopravu, montáž a daňový režim je potrebné upresniť v individuálnej ponuke. Návrh vyžaduje projektové a statické overenie.</p>
+                    <p>Návrh sa po obnovení stránky neuchová. Pred odchodom si poznačte vybrané diely.</p>
+                    <a href="mailto:{{ __('site.footer.email') }}">Prebrať návrh s WikiDom</a>
+                </details>
                 <button type="button" class="link-btn" id="clearAssembly">
                     <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
                     Začať odznova
